@@ -178,7 +178,7 @@ textarea:focus{outline:2px solid var(--gold-l)}
 <button class="chip" data-cat="money">돈·현실</button>
 <button class="chip" data-cat="mind">마음·회복</button>
 </div>
-<div class="hint" id="catHint">고민이 속한 영역도 하나 콕 짚어줘요. 읽는 결이 달라지거든요.<br>고민은 해석을 만드는 데만 쓰이고, 어디에도 저장되지 않아요.</div>
+<div class="hint" id="catHint">고민은 해석을 만드는 데만 쓰이고, 어디에도 저장되지 않아요.</div>
 <button class="btn" id="btnShuffle">언니, 카드 빨리 섞어줘</button>
 </section>
 
@@ -187,7 +187,7 @@ textarea:focus{outline:2px solid var(--gold-l)}
 <p class="lead">78장, 방금 다 섞었어요.<br>마음이 끌리는 숫자 <b>3개</b>만 순서대로 골라봐요.</p>
 <div class="pick-legend">고른 순서대로 ① 현재 상황 → ② 살펴볼 점 → ③ 행동 조언 으로 읽어줄게요</div>
 <div class="grid" id="numGrid"></div>
-<button class="btn" id="btnReveal" disabled>이 세 장으로 할래요</button>
+<button class="btn" id="btnReveal" disabled>언니 다 골랐어.</button>
 </section>
 
 <!-- 3: 로딩 -->
@@ -253,8 +253,9 @@ function getQuota(){try{const r=JSON.parse(localStorage.getItem("lolo_q")||"{}")
 function useQuota(){try{localStorage.setItem("lolo_q",JSON.stringify({d:todayKey(),n:getQuota()+1}));}catch(e){}updateQuotaUI();}
 function quotaLeft(){return Math.max(0,DAILY_MAX-getQuota());}
 function updateQuotaUI(){const el=$("quota");if(!el)return;const n=quotaLeft();
-  el.innerHTML=n>0?("오늘 남은 질문 "+"🌙".repeat(n)+'<span style="opacity:.35">'+"🌙".repeat(DAILY_MAX-n)+"</span>")
-                 :"오늘의 질문 세 번을 다 썼어요 · 내일 다시 만나요 🌙";}
+  el.innerHTML=(n>0?("오늘 남은 질문 "+"🌙".repeat(n)+'<span style="opacity:.35">'+"🌙".repeat(DAILY_MAX-n)+"</span>")
+                 :"오늘의 질문 세 번을 다 썼어요 · 내일 다시 만나요 🌙")
+   +'<br><span style="font-size:.72rem;opacity:.8">(토큰비는 로로가 부담해요 🥷)</span>';}
 updateQuotaUI();
 $("btnShuffle").onclick=()=>{
   if(quotaLeft()<=0){$("catHint").textContent="오늘의 질문 세 번을 다 썼어요. 카드는 내일 또 열려요 🌙";return;}
@@ -330,9 +331,9 @@ function buildPrompt(q,cards){
 
 const ERRCOPY={rate_limited:"내 계정 사용량이 잠깐 찼어요. 조금 쉬었다가 '다시 시도' 눌러줘요.",refused:"이 문장으로는 해석을 만들 수 없었어요. 표현을 조금 바꿔서 새로 뽑아봐요.",invalid_json:"해석이 살짝 엉켰어요. '다시 시도' 한 번만 눌러줘요.",upstream_error:"연결이 잠깐 흔들렸어요. '다시 시도' 눌러줘요.",empty_completion:"해석이 비어서 왔어요. '다시 시도' 눌러줘요."};
 const HIDECODES=["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"];
-const LOADS=["카드 펼치는 중…","로로가 어떻게 해석할지 고민 중…","프린트가 고장나서 로로가 열심히 손으로 적는 중.."];
+const LOADS=["로로가 열심히 해석하고 있어요."];
 let loadTimer=null;
-function startLoad(){let i=0;$("loadMsg").textContent=LOADS[1];clearInterval(loadTimer);loadTimer=setInterval(()=>{i=Math.min(i+1,LOADS.length-1);$("loadMsg").textContent=LOADS[i];},4500);}
+function startLoad(){$("loadMsg").textContent=LOADS[0];clearInterval(loadTimer);}
 function stopLoad(){clearInterval(loadTimer);}
 
 function interpError(msg,retryable){
