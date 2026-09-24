@@ -174,7 +174,7 @@ export default async function handler(req, res){
           generationConfig: {
             maxOutputTokens: MAXTOK,
             responseMimeType: "application/json",
-            thinkingConfig: { thinkingLevel: "low" },
+            thinkingConfig: { thinkingLevel: "minimal" },
           },
         }),
       });
