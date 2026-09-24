@@ -174,12 +174,12 @@ export default async function handler(req, res){
           generationConfig: {
             maxOutputTokens: MAXTOK,
             responseMimeType: "application/json",
-            thinkingConfig: { thinkingLevel: "minimal" },
+            thinkingConfig: { thinkingLevel: "low" },
           },
         }),
       });
     if (r.status === 429) return res.status(429).json({error:"rate_limited"});
-    if (!r.ok) return res.status(502).json({error:"upstream"});
+    if (!r.ok) { const eb = await r.text().catch(() => ""); console.error("gemini_upstream", MODEL, r.status, eb.slice(0, 500)); return res.status(502).json({error:"upstream_" + r.status}); }
     const out = await r.json();
     const text = (((out.candidates || [])[0] || {}).content?.parts || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
     const data = parseJsonLoose(text);
@@ -189,10 +189,11 @@ export default async function handler(req, res){
     if (!data || !ok(data.a) || !ok(data.bR)
         || typeof data.common !== "string" || typeof data.diff !== "string"
         || !Array.isArray(data.acts) || data.acts.length !== 3)
-      return res.status(502).json({error:"bad_json"});
+      { const fr = ((out.candidates || [])[0] || {}).finishReason || ""; console.error("gemini_bad_json", MODEL, fr, String(text).slice(0, 400)); return res.status(502).json({error:"bad_json" + (fr ? "_" + fr : "")}); }
     data.ms = { pils: msPils(P) };
     return res.status(200).json(data);
   } catch (e) {
-    return res.status(502).json({error:"upstream"});
+    console.error("gemini_exception", MODEL, String(e).slice(0, 300));
+    return res.status(502).json({error:"upstream_exc"});
   }
 }
