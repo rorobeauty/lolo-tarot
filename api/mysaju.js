@@ -27,7 +27,7 @@ function guard(req, res){
 }
 
 
-const MODEL = process.env.LOLO_MYSAJU_MODEL || "claude-haiku-4-5-20251001";
+const MODEL = process.env.LOLO_MYSAJU_MODEL || "gemini-3.7-flash";
 
 const STEMS="갑을병정무기경신임계", BRS="자축인묘진사오미신유술해";
 const SEL="목목화화토토금금수수", BEL="수토목목토화화토금금토수";
@@ -96,7 +96,7 @@ function buildPrompt(c, P){
 "전문가 구성: [직설적인 현실파]는 좋은 말로 돌려 말하지 않고 가장 강한 장점·약점·반복되기 쉬운 문제를 솔직하고 구체적으로. [신중한 정통파]는 월령·오행의 균형·십성·합충을 종합해 근거가 분명한 내용만 보수적으로, 여러 가능성이 있으면 단정하지 말고 조건을 설명. 두 사람 모두 해요체의 정중한 전문가 말투.",
 "다섯 항목 순서(두 전문가 동일): 1) 타고난 성향 2) 재능과 약점 3) 직업·재물운 4) 인간관계·연애운 5) 현재 고민에 대한 조언.",
 "원칙: 위에 제공된 명식의 간지·오행만 재료로 사용하고 없는 요소를 지어내지 말 것. 사주를 확정된 운명처럼 단정하거나 불안감을 조성하지 말 것. 건강·수명·죽음·임신 예언 금지, 의료·법률·투자 판단 대행 금지. 퇴사·이별 등 큰 결정을 단정 권유하지 말 것. 뻔하거나 누구에게나 맞는 표현 금지, 이 명식과 이 고민에만 맞는 문장으로. 시주가 미상이면 시주 관련 해석은 생략.",
-"분량: 각 항목 t는 최대 2문장(110자 이내). 각 항목 b는 명식 근거 1줄(25자 이내, 예: '일간 계수 · 월지 인목, 식상 발달'). common과 diff는 각 3줄(150자) 이내, diff에는 갈린 이유 포함. acts는 이 고민에 맞는 작고 구체적인 행동 3개(각 40자 이내). 맞춤법과 오탈자를 스스로 검수할 것.",
+"분량(엄수): 각 항목 t는 1~2문장, 70자 이내로 밀도 있게 — 수식어를 줄이고 핵심 판단만. 각 항목 b는 명식 근거 1줄(20자 이내, 예: '일간 계수 · 월지 인목'). common과 diff는 각 100자 이내(diff에 갈린 이유 포함). acts는 작고 구체적인 행동 3개(각 30자 이내). 짧다고 뻔해지면 안 되고, 이 명식에만 맞는 문장이어야 함. 맞춤법과 오탈자를 스스로 검수할 것.",
 'JSON만 출력하고 다른 텍스트·마크다운 금지: {"a":[{"t":"...","b":"..."},{...},{...},{...},{...}],"bR":[동일 형식 5개],"common":"...","diff":"...","acts":["...","...","..."]}',
 "a는 직설적인 현실파의 5개 항목, bR는 신중한 정통파의 5개 항목이며 순서는 위 다섯 항목 순서를 따릅니다. 본문에서 a·bR 같은 키 이름은 언급 금지.",
   ].join("\n");
@@ -148,7 +148,7 @@ function validateBody(b){
 export default async function handler(req, res){
   if (!guard(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({error:"method"});
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(500).json({error:"no_key"});
 
   let b = req.body;
@@ -158,24 +158,29 @@ export default async function handler(req, res){
 
   const P = fourPillars(c.date, c.time);
 
+  const PROMPT = buildPrompt(c, P);
+  const MAXTOK = 1400;
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 2400,
-        messages: [{ role: "user", content: buildPrompt(c, P) }],
-      }),
-    });
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": key,
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: PROMPT }] }],
+          generationConfig: {
+            maxOutputTokens: MAXTOK,
+            responseMimeType: "application/json",
+          },
+        }),
+      });
     if (r.status === 429) return res.status(429).json({error:"rate_limited"});
     if (!r.ok) return res.status(502).json({error:"upstream"});
     const out = await r.json();
-    const text = (out.content || []).filter(x => x.type === "text").map(x => x.text).join("\n");
+    const text = (((out.candidates || [])[0] || {}).content?.parts || []).map(p => p.text || "").join("\n");
     const data = parseJsonLoose(text);
     const norm = a => Array.isArray(a) ? a.map(x => typeof x === "string" ? {t:x,b:""} : (x && typeof x.t === "string") ? {t:x.t, b: typeof x.b === "string" ? x.b : ""} : null) : null;
     if (data){ data.a = norm(data.a); data.bR = norm(data.bR); }

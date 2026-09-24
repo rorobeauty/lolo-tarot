@@ -28,7 +28,7 @@ function guard(req, res){
 }
 
 
-const MODEL = process.env.LOLO_MODEL || "claude-haiku-4-5-20251001";
+const MODEL = process.env.LOLO_MODEL || "gemini-3.7-flash";
 
 const MAJORS = ["The Fool","The Magician","The High Priestess","The Empress","The Emperor","The Hierophant","The Lovers","The Chariot","Strength","The Hermit","Wheel of Fortune","Justice","The Hanged Man","Death","Temperance","The Devil","The Tower","The Star","The Moon","The Sun","Judgement","The World"];
 const SUITS = ["Wands","Cups","Swords","Pentacles"];
@@ -74,7 +74,7 @@ function parseJsonLoose(text){
 export default async function handler(req, res){
   if (!guard(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({error:"method"});
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(500).json({error:"no_key"});
 
   let body = req.body;
@@ -86,24 +86,29 @@ export default async function handler(req, res){
   if (!Array.isArray(cards) || cards.length !== 3 || new Set(cards).size !== 3
       || cards.some(c => !VALID_CARDS.has(c))) return res.status(400).json({error:"bad_cards"});
 
+  const PROMPT = buildPrompt(q, cat, cards);
+  const MAXTOK = 1300;
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1300,
-        messages: [{ role: "user", content: buildPrompt(q, cat, cards) }],
-      }),
-    });
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": key,
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: PROMPT }] }],
+          generationConfig: {
+            maxOutputTokens: MAXTOK,
+            responseMimeType: "application/json",
+          },
+        }),
+      });
     if (r.status === 429) return res.status(429).json({error:"rate_limited"});
     if (!r.ok) return res.status(502).json({error:"upstream"});
     const out = await r.json();
-    const text = (out.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+    const text = (((out.candidates || [])[0] || {}).content?.parts || []).map(p => p.text || "").join("\n");
     const data = parseJsonLoose(text);
     if (!data || !Array.isArray(data.a) || data.a.length !== 3
         || !Array.isArray(data.bR) || data.bR.length !== 3

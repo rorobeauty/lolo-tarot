@@ -27,7 +27,7 @@ function guard(req, res){
 }
 
 
-const MODEL = process.env.LOLO_SAJU_MODEL || "claude-haiku-4-5-20251001"; // 궁합도 하이쿠(약 10원/회)
+const MODEL = process.env.LOLO_SAJU_MODEL || "gemini-3.7-flash";
 const RELS = { friend: "친구", couple: "연인", family: "가족", coworker: "동료" };
 
 const STEMS="갑을병정무기경신임계",BRS="자축인묘진사오미신유술해";
@@ -85,7 +85,7 @@ function parseJsonLoose(text){
 export default async function handler(req, res){
   if (!guard(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({error:"method"});
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(500).json({error:"no_key"});
 
   let body = req.body;
@@ -93,24 +93,29 @@ export default async function handler(req, res){
   if (!body || !RELS[body.rel] || !validPerson(body.p1) || !validPerson(body.p2))
     return res.status(400).json({error:"bad_input"});
 
+  const PROMPT = buildPrompt(body);
+  const MAXTOK = 900;
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 900,
-        messages: [{ role: "user", content: buildPrompt(body) }],
-      }),
-    });
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": key,
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: PROMPT }] }],
+          generationConfig: {
+            maxOutputTokens: MAXTOK,
+            responseMimeType: "application/json",
+          },
+        }),
+      });
     if (r.status === 429) return res.status(429).json({error:"rate_limited"});
     if (!r.ok) return res.status(502).json({error:"upstream"});
     const out = await r.json();
-    const text = (out.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+    const text = (((out.candidates || [])[0] || {}).content?.parts || []).map(p => p.text || "").join("\n");
     const data = parseJsonLoose(text);
     if (!data || typeof data.verdict !== "string" || typeof data.sum !== "string"
         || !Array.isArray(data.good) || !data.good.length || !data.good.every(x => x && typeof x.t === "string" && typeof x.b === "string")
