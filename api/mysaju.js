@@ -159,7 +159,7 @@ export default async function handler(req, res){
   const P = fourPillars(c.date, c.time);
 
   const PROMPT = buildPrompt(c, P);
-  const MAXTOK = 1400;
+  const MAXTOK = 3000;
   try {
     const r = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
@@ -174,13 +174,14 @@ export default async function handler(req, res){
           generationConfig: {
             maxOutputTokens: MAXTOK,
             responseMimeType: "application/json",
+            thinkingConfig: { thinkingLevel: "low" },
           },
         }),
       });
     if (r.status === 429) return res.status(429).json({error:"rate_limited"});
     if (!r.ok) return res.status(502).json({error:"upstream"});
     const out = await r.json();
-    const text = (((out.candidates || [])[0] || {}).content?.parts || []).map(p => p.text || "").join("\n");
+    const text = (((out.candidates || [])[0] || {}).content?.parts || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
     const data = parseJsonLoose(text);
     const norm = a => Array.isArray(a) ? a.map(x => typeof x === "string" ? {t:x,b:""} : (x && typeof x.t === "string") ? {t:x.t, b: typeof x.b === "string" ? x.b : ""} : null) : null;
     if (data){ data.a = norm(data.a); data.bR = norm(data.bR); }

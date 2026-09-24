@@ -94,7 +94,7 @@ export default async function handler(req, res){
     return res.status(400).json({error:"bad_input"});
 
   const PROMPT = buildPrompt(body);
-  const MAXTOK = 900;
+  const MAXTOK = 2200;
   try {
     const r = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
@@ -109,13 +109,14 @@ export default async function handler(req, res){
           generationConfig: {
             maxOutputTokens: MAXTOK,
             responseMimeType: "application/json",
+            thinkingConfig: { thinkingLevel: "low" },
           },
         }),
       });
     if (r.status === 429) return res.status(429).json({error:"rate_limited"});
     if (!r.ok) return res.status(502).json({error:"upstream"});
     const out = await r.json();
-    const text = (((out.candidates || [])[0] || {}).content?.parts || []).map(p => p.text || "").join("\n");
+    const text = (((out.candidates || [])[0] || {}).content?.parts || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
     const data = parseJsonLoose(text);
     if (!data || typeof data.verdict !== "string" || typeof data.sum !== "string"
         || !Array.isArray(data.good) || !data.good.length || !data.good.every(x => x && typeof x.t === "string" && typeof x.b === "string")

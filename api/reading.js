@@ -87,7 +87,7 @@ export default async function handler(req, res){
       || cards.some(c => !VALID_CARDS.has(c))) return res.status(400).json({error:"bad_cards"});
 
   const PROMPT = buildPrompt(q, cat, cards);
-  const MAXTOK = 1300;
+  const MAXTOK = 2600;
   try {
     const r = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
@@ -102,13 +102,14 @@ export default async function handler(req, res){
           generationConfig: {
             maxOutputTokens: MAXTOK,
             responseMimeType: "application/json",
+            thinkingConfig: { thinkingLevel: "low" },
           },
         }),
       });
     if (r.status === 429) return res.status(429).json({error:"rate_limited"});
     if (!r.ok) return res.status(502).json({error:"upstream"});
     const out = await r.json();
-    const text = (((out.candidates || [])[0] || {}).content?.parts || []).map(p => p.text || "").join("\n");
+    const text = (((out.candidates || [])[0] || {}).content?.parts || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
     const data = parseJsonLoose(text);
     if (!data || !Array.isArray(data.a) || data.a.length !== 3
         || !Array.isArray(data.bR) || data.bR.length !== 3
@@ -116,6 +117,5 @@ export default async function handler(req, res){
     return res.status(200).json(data);
   } catch (e) {
     return res.status(502).json({error:"upstream"});
-    
   }
 }
