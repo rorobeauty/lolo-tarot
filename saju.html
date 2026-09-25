@@ -185,7 +185,7 @@ let rel="friend", lastCtx=null;
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function show(step){for(const s of["stepAsk","stepLoad","stepResult"])$(s).classList.toggle("hide",s!==step);}
-function zodiac(dateStr){const y=+dateStr.slice(0,4);return ZODIAC[y%12];}
+function zodiac(dateStr){const [y,m,d]=dateStr.split("-").map(Number);const yy=(m<2||(m===2&&d<4))?y-1:y;return ZODIAC[yy%12];}
 
 /* 하루 3회 제한 */
 const DAILY_MAX=3;

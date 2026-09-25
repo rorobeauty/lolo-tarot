@@ -235,7 +235,7 @@ const DECK=[{"en": "The Fool", "ko": "바보", "svg": "<svg viewBox=\"0 0 100 15
 const POS=["현재 상황","살펴볼 점","행동 조언"];
 const CATS={work:{l:"일·진로"},rel:{l:"관계"},new:{l:"새로운 도전"},money:{l:"돈·현실"},mind:{l:"마음·회복"}};
 const $=id=>document.getElementById(id);
-let order=null, picks=[], cat=null, lastCtx=null;
+let order=null, picks=[], cat=null, lastCtx=null, reqSeq=0;
 
 function show(step){for(const s of["stepAsk","stepPick","stepLoad","stepResult"])$(s).classList.toggle("hide",s!==step);}
 function cryptoInt(n){const max=Math.floor(0x100000000/n)*n,b=new Uint32Array(1);let v;do{crypto.getRandomValues(b);v=b[0];}while(v>=max);return v%n;}
@@ -347,17 +347,25 @@ function interpError(msg,retryable){
 }
 
 async function interpret(){
+  const myId=++reqSeq;                       // 이 요청의 번호표
+  const ctx={q:lastCtx.q,cat:cat,cards:lastCtx.cards.slice()};  // 요청 시점 컨텍스트 고정
+  const okItem=x=>x&&typeof x==="object"&&typeof x.t==="string"&&typeof x.b==="string";
   try{
     const res=await fetch("/api/reading",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({q:lastCtx.q,cat:cat,cards:lastCtx.cards.map(c=>c.en)})});
+      body:JSON.stringify({q:ctx.q,cat:ctx.cat,cards:ctx.cards.map(c=>c.en)})});
+    if(myId!==reqSeq)return;                 // 그 사이 새 질문이 시작됐으면 이 응답은 폐기
     if(res.status===429)throw{code:"rate_limited"};
     if(res.status===503)throw{code:"paused"};
     if(!res.ok)throw{code:"upstream_error"};
     const data=await res.json();
-    if(!data||!Array.isArray(data.a)||data.a.length!==3||!Array.isArray(data.bR)||data.bR.length!==3||!Array.isArray(data.acts))throw{code:"invalid_json"};
-    stopLoad();fillInterp(data,lastCtx.cards);
+    if(myId!==reqSeq)return;
+    if(!data||!Array.isArray(data.a)||data.a.length!==3||!data.a.every(okItem)
+       ||!Array.isArray(data.bR)||data.bR.length!==3||!data.bR.every(okItem)
+       ||!Array.isArray(data.acts)||data.acts.length!==3||!data.acts.every(v=>typeof v==="string"))throw{code:"invalid_json"};
+    stopLoad();fillInterp(data,ctx.cards);
     useQuota();
   }catch(e){
+    if(myId!==reqSeq)return;                 // 오래된 요청의 에러는 화면에 반영하지 않음
     interpError(ERRCOPY[e.code]||ERRCOPY.upstream_error,true);
   }
 }
