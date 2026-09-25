@@ -104,11 +104,12 @@ export default async function handler(req, res){
         },
         body: JSON.stringify({
           contents: [{ parts: [{ text: PROMPT }] }],
-          generationConfig: {
-            maxOutputTokens: MAXTOK,
-            responseMimeType: "application/json",
-            thinkingConfig: { thinkingLevel: "low" },
-          },
+          generationConfig: Object.assign(
+            { maxOutputTokens: MAXTOK, responseMimeType: "application/json" },
+            /^gemini-3/.test(MODEL)
+              ? { thinkingConfig: { thinkingLevel: "low" } }      // 3.x 세대: 단계형 설정
+              : { thinkingConfig: { thinkingBudget: 0 } }         // 2.5 세대: 생각 끔
+          ),
         }),
       });
     if (r.status === 429) return res.status(429).json({error:"rate_limited"});
