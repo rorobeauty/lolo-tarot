@@ -32,7 +32,13 @@ function guard(req, res){
 }
 
 
-const MODEL = process.env.LOLO_MYSAJU_MODEL || "gemini-3.7-flash";
+// 모델 이름 정리: 전각 문자(ｇｅｍｉｎｉ)·공백·대문자·같이 복사된 설명 문구가 섞여도 gemini-xxx만 뽑아냄
+function _cleanModel(s){
+  const m = String(s || "").normalize("NFKC").toLowerCase().match(/gemini-[a-z0-9.\-]+/);
+  return m ? m[0].replace(/[.\-]+$/, "") : "";
+}
+const MODEL = _cleanModel(process.env.LOLO_MYSAJU_MODEL) || "gemini-3.7-flash";
+const MODEL_CHAIN = [...new Set([MODEL, ...["gemini-3.7-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite"]])];
 
 const STEMS="갑을병정무기경신임계", BRS="자축인묘진사오미신유술해";
 const SEL="목목화화토토금금수수", BEL="수토목목토화화토금금토수";
@@ -150,6 +156,18 @@ function validateBody(b){
   return { name, date: b.date, time: b.time, sex: b.sex, q, region };
 }
 
+function finalizeOut(data, P){
+  if (!data || typeof data !== "object") return null;
+  const norm = a => Array.isArray(a) ? a.map(x => typeof x === "string" ? {t:x,b:""} : (x && typeof x.t === "string") ? {t:x.t, b: typeof x.b === "string" ? x.b : ""} : null) : null;
+  data.a = norm(data.a); data.bR = norm(data.bR);
+  const ok = a => a && a.length === 5 && !a.includes(null);
+  if (!ok(data.a) || !ok(data.bR)
+      || typeof data.common !== "string" || typeof data.diff !== "string"
+      || !Array.isArray(data.acts) || data.acts.length !== 3 || !data.acts.every(v => typeof v === "string" && v.trim())) return null;
+  data.ms = { pils: msPils(P) };
+  return data;
+}
+
 export default async function handler(req, res){
   if (!guard(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({error:"method"});
@@ -165,41 +183,51 @@ export default async function handler(req, res){
 
   const PROMPT = buildPrompt(c, P);
   const MAXTOK = 3000;
-  try {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": key,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: PROMPT }] }],
-          generationConfig: Object.assign(
-            { maxOutputTokens: MAXTOK, responseMimeType: "application/json" },
-            /^gemini-3/.test(MODEL)
-              ? { thinkingConfig: { thinkingLevel: "low" } }      // 3.x 세대: 단계형 설정
-              : { thinkingConfig: { thinkingBudget: 0 } }         // 2.5 세대: 생각 끔
-          ),
-        }),
-      });
-    if (r.status === 429) return res.status(429).json({error:"rate_limited"});
-    if (!r.ok) { const eb = await r.text().catch(() => ""); console.error("gemini_upstream", MODEL, r.status, eb.slice(0, 500)); return res.status(502).json({error:"upstream_" + r.status}); }
-    const out = await r.json();
-    const text = (((out.candidates || [])[0] || {}).content?.parts || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
-    const data = parseJsonLoose(text);
-    const norm = a => Array.isArray(a) ? a.map(x => typeof x === "string" ? {t:x,b:""} : (x && typeof x.t === "string") ? {t:x.t, b: typeof x.b === "string" ? x.b : ""} : null) : null;
-    if (data){ data.a = norm(data.a); data.bR = norm(data.bR); }
-    const ok = a => a && a.length === 5 && !a.includes(null);
-    if (!data || !ok(data.a) || !ok(data.bR)
-        || typeof data.common !== "string" || typeof data.diff !== "string"
-        || !Array.isArray(data.acts) || data.acts.length !== 3 || !data.acts.every(v => typeof v === "string" && v.trim()))
-      { const fr = ((out.candidates || [])[0] || {}).finishReason || ""; console.error("gemini_bad_json", MODEL, fr || "-", "len=" + String(text).length); return res.status(502).json({error:"bad_json" + (fr ? "_" + fr : "")}); }
-    data.ms = { pils: msPils(P) };
+  const t0 = Date.now();
+  let lastErr = "none", sawRate = false;
+  // 자동 갈아타기: 모델 없음(404)·한도(429)·장애(5xx)·형식 실패면 다음 모델로 (과금은 성공/형식실패 건만)
+  for (const m of MODEL_CHAIN) {
+    const left = 50000 - (Date.now() - t0);
+    if (left < 8000) break;                                   // 서버 시간 예산 보호
+    let r;
+    try {
+      r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: PROMPT }] }],
+            generationConfig: Object.assign(
+              { maxOutputTokens: MAXTOK, responseMimeType: "application/json" },
+              /^gemini-3/.test(m)
+                ? { thinkingConfig: { thinkingLevel: "low" } }   // 3.x 세대
+                : { thinkingConfig: { thinkingBudget: 0 } }      // 2.5 세대: 생각 끔
+            ),
+          }),
+          signal: (typeof AbortSignal !== "undefined" && AbortSignal.timeout) ? AbortSignal.timeout(left) : undefined,
+        });
+    } catch (e) {
+      console.error("gemini_exception", m, String(e).slice(0, 200));
+      lastErr = "exc"; continue;
+    }
+    if (!r.ok) {
+      const eb = await r.text().catch(() => "");
+      console.error("gemini_upstream", m, r.status, eb.slice(0, 300));
+      if (r.status === 429) sawRate = true;
+      lastErr = String(r.status); continue;
+    }
+    const out = await r.json().catch(() => null);
+    const cand = ((out && out.candidates) || [])[0] || {};
+    const text = ((cand.content && cand.content.parts) || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
+    const data = finalizeOut(parseJsonLoose(text), P);
+    if (!data) {
+      console.error("gemini_bad_json", m, cand.finishReason || "-", "len=" + text.length);
+      lastErr = "bad_json"; continue;
+    }
+    if (m !== MODEL_CHAIN[0]) console.log("gemini_fallback_ok", m);
     return res.status(200).json(data);
-  } catch (e) {
-    console.error("gemini_exception", MODEL, String(e).slice(0, 300));
-    return res.status(502).json({error:"upstream_exc"});
   }
+  if (sawRate) return res.status(429).json({error:"rate_limited"});
+  return res.status(502).json({error: lastErr === "bad_json" ? "bad_json" : "upstream_" + lastErr});
 }
