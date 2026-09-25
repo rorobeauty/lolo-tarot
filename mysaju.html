@@ -81,7 +81,7 @@ input:focus,textarea:focus{outline:2px solid var(--gold-l)}
  .sheet{box-shadow:none;border:none;border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  .rwrap{grid-template-columns:1fr 1fr}
 }
-</style>
+#stepAsk,#stepLoad,#stepResult,#quota{display:none!important}.closed-note{text-align:center;padding:28px 20px}.closed-note .cn-t{font-size:.98rem;line-height:1.85;word-break:keep-all;margin:0;color:var(--ink,#F3ECD9)}.closed-note .cn-s{margin:14px 0 0;font-size:.85rem;opacity:.75}</style>
 </head>
 <body>
 <div class="app">
@@ -96,6 +96,12 @@ input:focus,textarea:focus{outline:2px solid var(--gold-l)}
 <div class="tag" id="quota"></div>
 </div>
 
+
+<!-- 휴업 안내 (사주 전용) -->
+<section class="panel closed-note">
+<p class="cn-t">새벽에 문자가 많이 와서<br>놀라서 확인을 해보니<br>토큰비가 50억(아님) 결제되었더라고요..<br>보이스피싱 당한 줄 알았음••<br>돈 벌어 와서 다음에 또 열어볼게요!</p>
+<p class="cn-s">— 로로 🌙</p>
+</section>
 <!-- 1: 입력 -->
 <section id="stepAsk" class="panel">
 <p class="lead">공쥬의 사주 명식을 두 명리학자가 각자의 눈으로 읽어드려요.<br>직설파와 정통파, 서로 다른 두 해석을 한 장에 담아줄게요.</p>
