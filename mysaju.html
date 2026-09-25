@@ -192,7 +192,7 @@ function quotaLeft(){return Math.max(0,DAILY_MAX-getQuota());}
 function updateQuotaUI(){$("quota").innerHTML=(quotaLeft()>0?("오늘 남은 질문 "+"🌙".repeat(quotaLeft())+'<span style="opacity:.35">'+"🌙".repeat(DAILY_MAX-quotaLeft())+"</span>")
   :"오늘의 질문 세 번을 다 썼어요 · 내일 다시 만나요 🌙")
   +'<br><span style="font-size:.72rem;opacity:.8">(토큰비는 로로가 부담해요 🥷)</span>'
-    +(new Date()<new Date(2026,8,29)?'<br><a href=\"https://mkt.shopping.naver.com/link/693e8406003f786e5c3c3147\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;margin-top:6px;font-size:.68rem;letter-spacing:.02em;color:#c9a86a;opacity:.9;text-decoration:underline;text-underline-offset:3px\">[광고] 해달씨 X 로로라라 괄사 기획전 · 9월 28일까지</a>':'');}
+    +(new Date()<new Date(2026,8,28)?'<br><span style=\"display:inline-block;margin-top:6px;font-size:.72rem;letter-spacing:.02em;color:#c9a86a;opacity:.9\">🌕 달이 가장 밝은 밤, 그대의 운도 밝기를 · 풍성한 한가위 되시오</span>':'');}
 updateQuotaUI();
 
 [...document.querySelectorAll("#cals .chip")].forEach(ch=>{ch.onclick=()=>{cal=ch.dataset.cal;
