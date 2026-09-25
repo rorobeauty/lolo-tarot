@@ -50,7 +50,7 @@ function pillars(dateStr,timeStr){const [y,m,d]=dateStr.split("-").map(Number);
  const ys=((yy-4)%10+10)%10, yb=((yy-4)%12+12)%12;
  const dn=(jdn(y,m,d)+49)%60, ds=dn%10, db=dn%12;
  let hp=null;
- if(timeStr){const H=+timeStr.slice(0,2);const hb=Math.floor(((H+1)%24)/2);const hs=((ds%5)*2+hb)%10;hp={s:hs,b:hb};}
+ if(timeStr){const [H,Mi]=timeStr.split(":").map(Number);const t=(H*60+Mi+30)%1440;const hb=Math.floor(t/120);const hs=((ds%5)*2+hb)%10;hp={s:hs,b:hb};} // 시주: 한국 표준시(동경135°)와 실제 경도 차이 30분 보정 — 자시 23:30~01:30, 유시 17:30~19:30
  return {y:{s:ys,b:yb},d:{s:ds,b:db},h:hp};}
 function pilName(p){return STEMS[p.s]+BRS[p.b];}
 function pilDesc(P){let t="연주 "+pilName(P.y)+"("+ELK[SEL[P.y.s]]+"·"+ELK[BEL[P.y.b]]+") · 일주 "+pilName(P.d)+"(일간 "+ELK[SEL[P.d.s]]+")";if(P.h)t+=" · 시주 "+pilName(P.h)+"("+ELK[SEL[P.h.s]]+")";return t;}

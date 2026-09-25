@@ -80,7 +80,7 @@ function fourPillars(dateStr, timeStr){
   const dn=(jdn(y,m,d)+49)%60, ds=dn%10, db=dn%12;
   // 시주
   let hp=null;
-  if(timeStr){const H=+timeStr.slice(0,2);const hb=Math.floor(((H+1)%24)/2);const hs=((ds%5)*2+hb)%10;hp={s:hs,b:hb};}
+  if(timeStr){const [H,Mi]=timeStr.split(":").map(Number);const t=(H*60+Mi+30)%1440;const hb=Math.floor(t/120);const hs=((ds%5)*2+hb)%10;hp={s:hs,b:hb};} // 시주: 한국 표준시(동경135°)와 실제 경도 차이 30분 보정 — 자시 23:30~01:30, 유시 17:30~19:30
   return {y:{s:ys,b:yb}, m:{s:ms,b:mb}, d:{s:ds,b:db}, h:hp};
 }
 const pn=p=>STEMS[p.s]+BRS[p.b];
