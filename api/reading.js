@@ -5,19 +5,24 @@ export const maxDuration = 60;
 
 // ── 보호막: 일시정지 · 출처 확인 · 속도 제한 ──
 const ALLOWED_HOST = process.env.LOLO_ALLOWED_HOST || "lolo-tarot.vercel.app";
-const RATE_MAX = Number(process.env.LOLO_RATE_MAX || 8);          // 1분당 IP별 허용 횟수
+const _rm = Number(process.env.LOLO_RATE_MAX);
+const RATE_MAX = (Number.isFinite(_rm) && _rm > 0) ? Math.floor(_rm) : 8;  // 1분당 IP별 허용 횟수(잘못된 값이면 8)
 const _BUCKET = new Map();
 function _ip(req){ return ((req.headers["x-forwarded-for"]||"").split(",")[0].trim()) || "?"; }
 function _originOk(req){
   const o = String(req.headers.origin || req.headers.referer || "");
-  return o.includes(ALLOWED_HOST) || o.includes("localhost") || o.includes("127.0.0.1");
+  let host = "";
+  try { host = new URL(o).hostname; } catch (e) { return false; }
+  if (host === ALLOWED_HOST) return true;
+  const dev = process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production";
+  return !!dev && (host === "localhost" || host === "127.0.0.1");
 }
 function _allow(ip){
   const now = Date.now();
   const arr = (_BUCKET.get(ip) || []).filter(t => now - t < 60000);
   if (arr.length >= RATE_MAX) { _BUCKET.set(ip, arr); return false; }
   arr.push(now); _BUCKET.set(ip, arr);
-  if (_BUCKET.size > 5000) _BUCKET.clear();
+  if (_BUCKET.size > 5000) { for (const [k, v] of _BUCKET) { if (!v.some(t => now - t < 60000)) _BUCKET.delete(k); } }
   return true;
 }
 function guard(req, res){
@@ -82,7 +87,7 @@ export default async function handler(req, res){
   const q = (body && typeof body.q === "string") ? body.q.trim().slice(0, 200) : "";
   const cat = body && body.cat;
   const cards = body && body.cards;
-  if (!q || !CATS[cat]) return res.status(400).json({error:"bad_input"});
+  if (!q || typeof cat !== "string" || !Object.hasOwn(CATS, cat)) return res.status(400).json({error:"bad_input"});
   if (!Array.isArray(cards) || cards.length !== 3 || new Set(cards).size !== 3
       || cards.some(c => !VALID_CARDS.has(c))) return res.status(400).json({error:"bad_cards"});
 
@@ -111,9 +116,13 @@ export default async function handler(req, res){
     const out = await r.json();
     const text = (((out.candidates || [])[0] || {}).content?.parts || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
     const data = parseJsonLoose(text);
-    if (!data || !Array.isArray(data.a) || data.a.length !== 3
-        || !Array.isArray(data.bR) || data.bR.length !== 3
-        || !Array.isArray(data.acts)) { const fr = ((out.candidates || [])[0] || {}).finishReason || ""; console.error("gemini_bad_json", MODEL, fr, String(text).slice(0, 400)); return res.status(502).json({error:"bad_json" + (fr ? "_" + fr : "")}); }
+    const okItem = x => x && typeof x === "object" && typeof x.t === "string" && x.t.trim() && typeof x.b === "string";
+    const okStrs = (a, n) => Array.isArray(a) && a.length === n && a.every(v => typeof v === "string" && v.trim());
+    if (!data || typeof data !== "object"
+        || !Array.isArray(data.a) || data.a.length !== 3 || !data.a.every(okItem)
+        || !Array.isArray(data.bR) || data.bR.length !== 3 || !data.bR.every(okItem)
+        || typeof data.common !== "string" || typeof data.diff !== "string"
+        || !okStrs(data.acts, 3) || (data.q !== undefined && typeof data.q !== "string")) { const fr = ((out.candidates || [])[0] || {}).finishReason || ""; console.error("gemini_bad_json", MODEL, fr || "-", "len=" + String(text).length); return res.status(502).json({error:"bad_json" + (fr ? "_" + fr : "")}); }
     return res.status(200).json(data);
   } catch (e) {
     console.error("gemini_exception", MODEL, String(e).slice(0, 300));

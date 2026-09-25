@@ -4,19 +4,24 @@ export const maxDuration = 60;
 
 // ── 보호막: 일시정지 · 출처 확인 · 속도 제한 ──
 const ALLOWED_HOST = process.env.LOLO_ALLOWED_HOST || "lolo-tarot.vercel.app";
-const RATE_MAX = Number(process.env.LOLO_RATE_MAX || 8);          // 1분당 IP별 허용 횟수
+const _rm = Number(process.env.LOLO_RATE_MAX);
+const RATE_MAX = (Number.isFinite(_rm) && _rm > 0) ? Math.floor(_rm) : 8;  // 1분당 IP별 허용 횟수(잘못된 값이면 8)
 const _BUCKET = new Map();
 function _ip(req){ return ((req.headers["x-forwarded-for"]||"").split(",")[0].trim()) || "?"; }
 function _originOk(req){
   const o = String(req.headers.origin || req.headers.referer || "");
-  return o.includes(ALLOWED_HOST) || o.includes("localhost") || o.includes("127.0.0.1");
+  let host = "";
+  try { host = new URL(o).hostname; } catch (e) { return false; }
+  if (host === ALLOWED_HOST) return true;
+  const dev = process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production";
+  return !!dev && (host === "localhost" || host === "127.0.0.1");
 }
 function _allow(ip){
   const now = Date.now();
   const arr = (_BUCKET.get(ip) || []).filter(t => now - t < 60000);
   if (arr.length >= RATE_MAX) { _BUCKET.set(ip, arr); return false; }
   arr.push(now); _BUCKET.set(ip, arr);
-  if (_BUCKET.size > 5000) _BUCKET.clear();
+  if (_BUCKET.size > 5000) { for (const [k, v] of _BUCKET) { if (!v.some(t => now - t < 60000)) _BUCKET.delete(k); } }
   return true;
 }
 function guard(req, res){
@@ -188,8 +193,8 @@ export default async function handler(req, res){
     const ok = a => a && a.length === 5 && !a.includes(null);
     if (!data || !ok(data.a) || !ok(data.bR)
         || typeof data.common !== "string" || typeof data.diff !== "string"
-        || !Array.isArray(data.acts) || data.acts.length !== 3)
-      { const fr = ((out.candidates || [])[0] || {}).finishReason || ""; console.error("gemini_bad_json", MODEL, fr, String(text).slice(0, 400)); return res.status(502).json({error:"bad_json" + (fr ? "_" + fr : "")}); }
+        || !Array.isArray(data.acts) || data.acts.length !== 3 || !data.acts.every(v => typeof v === "string" && v.trim()))
+      { const fr = ((out.candidates || [])[0] || {}).finishReason || ""; console.error("gemini_bad_json", MODEL, fr || "-", "len=" + String(text).length); return res.status(502).json({error:"bad_json" + (fr ? "_" + fr : "")}); }
     data.ms = { pils: msPils(P) };
     return res.status(200).json(data);
   } catch (e) {

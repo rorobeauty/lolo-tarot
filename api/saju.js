@@ -4,19 +4,24 @@ export const maxDuration = 60;
 
 // ── 보호막: 일시정지 · 출처 확인 · 속도 제한 ──
 const ALLOWED_HOST = process.env.LOLO_ALLOWED_HOST || "lolo-tarot.vercel.app";
-const RATE_MAX = Number(process.env.LOLO_RATE_MAX || 8);          // 1분당 IP별 허용 횟수
+const _rm = Number(process.env.LOLO_RATE_MAX);
+const RATE_MAX = (Number.isFinite(_rm) && _rm > 0) ? Math.floor(_rm) : 8;  // 1분당 IP별 허용 횟수(잘못된 값이면 8)
 const _BUCKET = new Map();
 function _ip(req){ return ((req.headers["x-forwarded-for"]||"").split(",")[0].trim()) || "?"; }
 function _originOk(req){
   const o = String(req.headers.origin || req.headers.referer || "");
-  return o.includes(ALLOWED_HOST) || o.includes("localhost") || o.includes("127.0.0.1");
+  let host = "";
+  try { host = new URL(o).hostname; } catch (e) { return false; }
+  if (host === ALLOWED_HOST) return true;
+  const dev = process.env.VERCEL_ENV && process.env.VERCEL_ENV !== "production";
+  return !!dev && (host === "localhost" || host === "127.0.0.1");
 }
 function _allow(ip){
   const now = Date.now();
   const arr = (_BUCKET.get(ip) || []).filter(t => now - t < 60000);
   if (arr.length >= RATE_MAX) { _BUCKET.set(ip, arr); return false; }
   arr.push(now); _BUCKET.set(ip, arr);
-  if (_BUCKET.size > 5000) _BUCKET.clear();
+  if (_BUCKET.size > 5000) { for (const [k, v] of _BUCKET) { if (!v.some(t => now - t < 60000)) _BUCKET.delete(k); } }
   return true;
 }
 function guard(req, res){
@@ -45,13 +50,21 @@ function pilName(p){return STEMS[p.s]+BRS[p.b];}
 function pilDesc(P){let t="연주 "+pilName(P.y)+"("+ELK[SEL[P.y.s]]+"·"+ELK[BEL[P.y.b]]+") · 일주 "+pilName(P.d)+"(일간 "+ELK[SEL[P.d.s]]+")";if(P.h)t+=" · 시주 "+pilName(P.h)+"("+ELK[SEL[P.h.s]]+")";return t;}
 
 
+function todaySeoul(){
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const g = t => parts.find(p => p.type === t).value;
+  return `${g("year")}-${g("month")}-${g("day")}`;
+}
 function validPerson(p){
-  if (!p || typeof p !== "object") return false;
-  if (typeof p.name !== "string" || !p.name.trim() || p.name.length > 10) return false;
+  if (!p || typeof p !== "object" || Array.isArray(p)) return false;
+  if (typeof p.name !== "string" || !p.name.trim() || p.name.trim().length > 10) return false;
   if (typeof p.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(p.date)) return false;
-  const d = new Date(p.date + "T00:00:00Z");
-  if (isNaN(d) || p.date < "1900-01-01" || p.date > new Date().toISOString().slice(0,10)) return false;
-  if (p.time !== "" && !/^\d{2}:\d{2}$/.test(p.time)) return false;
+  const [y, m, d] = p.date.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return false;
+  if (p.date < "1900-01-01" || p.date > todaySeoul()) return false;
+  if (typeof p.time !== "string") return false;
+  if (p.time !== "" && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(p.time)) return false;
   return true;
 }
 
@@ -90,7 +103,9 @@ export default async function handler(req, res){
 
   let body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch(e){ body = null; } }
-  if (!body || !RELS[body.rel] || !validPerson(body.p1) || !validPerson(body.p2))
+  if (!body || typeof body !== "object" || Array.isArray(body)
+      || typeof body.rel !== "string" || !Object.hasOwn(RELS, body.rel)
+      || !validPerson(body.p1) || !validPerson(body.p2))
     return res.status(400).json({error:"bad_input"});
 
   const PROMPT = buildPrompt(body);
@@ -121,8 +136,8 @@ export default async function handler(req, res){
     if (!data || typeof data.verdict !== "string" || typeof data.sum !== "string"
         || !Array.isArray(data.good) || !data.good.length || !data.good.every(x => x && typeof x.t === "string" && typeof x.b === "string")
         || !Array.isArray(data.clash) || !data.clash.length || !data.clash.every(x => x && typeof x.t === "string" && typeof x.b === "string")
-        || !Array.isArray(data.tips) || data.tips.length !== 3)
-      { const fr = ((out.candidates || [])[0] || {}).finishReason || ""; console.error("gemini_bad_json", MODEL, fr, String(text).slice(0, 400)); return res.status(502).json({error:"bad_json" + (fr ? "_" + fr : "")}); }
+        || !Array.isArray(data.tips) || data.tips.length !== 3 || !data.tips.every(v => typeof v === "string" && v.trim()))
+      { const fr = ((out.candidates || [])[0] || {}).finishReason || ""; console.error("gemini_bad_json", MODEL, fr || "-", "len=" + String(text).length); return res.status(502).json({error:"bad_json" + (fr ? "_" + fr : "")}); }
     return res.status(200).json(data);
   } catch (e) {
     console.error("gemini_exception", MODEL, String(e).slice(0, 300));
