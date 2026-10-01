@@ -191,7 +191,7 @@ function useQuota(){try{localStorage.setItem("lolo_mysaju_q",JSON.stringify({d:t
 function quotaLeft(){return Math.max(0,DAILY_MAX-getQuota());}
 function updateQuotaUI(){$("quota").innerHTML=(quotaLeft()>0?("오늘 남은 질문 "+"🌙".repeat(quotaLeft())+'<span style="opacity:.35">'+"🌙".repeat(DAILY_MAX-quotaLeft())+"</span>")
   :"오늘의 질문 두 번을 다 썼어요 · 내일 다시 만나요 🌙")
-  +'<br><span style="font-size:.72rem;opacity:.8">(토큰비는 로로가 부담해요 🥷)</span>'
+  +'<br><span style="font-size:.72rem;opacity:.8">환절기 감기 조심하세요.</span>'
     ;}
 updateQuotaUI();
 
@@ -272,7 +272,7 @@ function renderSheet(d){
     +'<h4>공통으로 동의한 것</h4><p>'+esc(d.common)+'</p>'
     +'<h4>해석이 갈린 부분</h4><p>'+esc(d.diff)+'</p>'
     +'<h4>지금 실천할 행동 3가지</h4><ol>'+d.acts.map(a=>'<li>'+esc(a)+'</li>').join("")+'</ol></div>'
-    +'<div class="sfoot">전통 명리의 상징을 빌린 오락용 해석입니다 · 사주는 참고, 선택은 나답게<br>사주 한 번 여쭐 때마다 소인이 토큰비로 20원씩 내고 있소이다.</div>';
+    +'<div class="sfoot">재미로 보는 사주입니다.<br>전문가의 상담이나 조언을 대신하지 않아요.</div>';
 }
 
 /* 결과지 이미지 저장 (정직 안내·인앱 감지) */
