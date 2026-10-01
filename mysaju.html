@@ -81,7 +81,7 @@ input:focus,textarea:focus{outline:2px solid var(--gold-l)}
  .sheet{box-shadow:none;border:none;border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  .rwrap{grid-template-columns:1fr 1fr}
 }
-#stepAsk,#stepLoad,#stepResult,#quota{display:none!important}.closed-note{text-align:center;padding:28px 20px}.closed-note .cn-t{font-size:.98rem;line-height:1.85;word-break:keep-all;margin:0;color:var(--ink,#F3ECD9)}.closed-note .cn-s{margin:14px 0 0;font-size:.85rem;opacity:.75}</style>
+body{word-break:keep-all;overflow-wrap:break-word}</style>
 </head>
 <body>
 <div class="app">
@@ -96,12 +96,6 @@ input:focus,textarea:focus{outline:2px solid var(--gold-l)}
 <div class="tag" id="quota"></div>
 </div>
 
-
-<!-- 휴업 안내 (사주 전용) -->
-<section class="panel closed-note">
-<p class="cn-t">새벽에 문자가 많이 와서<br>놀라서 확인을 해보니<br>토큰비가 50억(아님) 결제되었더라고요..<br>보이스피싱 당한 줄 알았음••<br>돈 벌어 와서 다음에 또 열어볼게요!</p>
-<p class="cn-s">— 로로 🌙</p>
-</section>
 <!-- 1: 입력 -->
 <section id="stepAsk" class="panel">
 <p class="lead">공쥬의 사주 명식을 두 명리학자가 각자의 눈으로 읽어드려요.<br>직설파와 정통파, 서로 다른 두 해석을 한 장에 담아줄게요.</p>
@@ -189,16 +183,16 @@ function show(step){for(const s of["stepAsk","stepLoad","stepResult"])$(s).class
 function inApp(){return /KAKAOTALK|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent)||/NAVER\(/i.test(navigator.userAgent);}
 function blobToDataURL(b){return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b);});}
 
-/* 하루 3회 제한 */
-const DAILY_MAX=3;
+/* 하루 2회 제한 */
+const DAILY_MAX=2;
 function todayKey(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
 function getQuota(){try{const r=JSON.parse(localStorage.getItem("lolo_mysaju_q")||"{}");return r.d===todayKey()?r.n||0:0;}catch(e){return 0;}}
 function useQuota(){try{localStorage.setItem("lolo_mysaju_q",JSON.stringify({d:todayKey(),n:getQuota()+1}));}catch(e){}updateQuotaUI();}
 function quotaLeft(){return Math.max(0,DAILY_MAX-getQuota());}
 function updateQuotaUI(){$("quota").innerHTML=(quotaLeft()>0?("오늘 남은 질문 "+"🌙".repeat(quotaLeft())+'<span style="opacity:.35">'+"🌙".repeat(DAILY_MAX-quotaLeft())+"</span>")
-  :"오늘의 질문 세 번을 다 썼어요 · 내일 다시 만나요 🌙")
+  :"오늘의 질문 두 번을 다 썼어요 · 내일 다시 만나요 🌙")
   +'<br><span style="font-size:.72rem;opacity:.8">(토큰비는 로로가 부담해요 🥷)</span>'
-    +(new Date()<new Date(2026,8,28)?'<br><span style=\"display:inline-block;margin-top:6px;font-size:.72rem;letter-spacing:.02em;color:#c9a86a;opacity:.9\">🌕 달이 가장 밝은 밤, 그대의 운도 밝기를 · 풍성한 한가위 되시오</span>':'');}
+    ;}
 updateQuotaUI();
 
 [...document.querySelectorAll("#cals .chip")].forEach(ch=>{ch.onclick=()=>{cal=ch.dataset.cal;
@@ -223,7 +217,7 @@ function toSolar(dateStr, leap){
 
 $("btnGo").onclick=()=>{
   $("formErr").style.display="none";
-  if(quotaLeft()<=0){formError("오늘의 질문 세 번을 다 썼어요. 내일 또 봐요 🌙");return;}
+  if(quotaLeft()<=0){formError("오늘의 질문 두 번을 다 썼어요. 내일 또 봐요 🌙");return;}
   const d1=$("d1").value, q=$("q").value.trim();
   if(!d1){formError("생년월일을 입력해줘요.");return;}
   if(!q){formError("지금의 고민을 한 문장으로 적어줘요.");$("q").focus();return;}

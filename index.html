@@ -141,7 +141,7 @@ textarea:focus{outline:2px solid var(--gold-l)}
  .syn ol{padding-left:5mm}
  .sfoot{font-size:8pt;margin-top:2mm}
 }
-</style>
+body{word-break:keep-all;overflow-wrap:break-word}</style>
 </head>
 <body>
 <div class="app">
@@ -247,19 +247,19 @@ function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt
     [...document.querySelectorAll("#cats .chip")].forEach(c=>c.classList.toggle("on",c===ch));};
 });
 
-const DAILY_MAX=3;
+const DAILY_MAX=2;
 function todayKey(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
 function getQuota(){try{const r=JSON.parse(localStorage.getItem("lolo_q")||"{}");return r.d===todayKey()?r.n||0:0;}catch(e){return 0;}}
 function useQuota(){try{localStorage.setItem("lolo_q",JSON.stringify({d:todayKey(),n:getQuota()+1}));}catch(e){}updateQuotaUI();}
 function quotaLeft(){return Math.max(0,DAILY_MAX-getQuota());}
 function updateQuotaUI(){const el=$("quota");if(!el)return;const n=quotaLeft();
   el.innerHTML=(n>0?("오늘 남은 질문 "+"🌙".repeat(n)+'<span style="opacity:.35">'+"🌙".repeat(DAILY_MAX-n)+"</span>")
-                 :"오늘의 질문 세 번을 다 썼어요 · 내일 다시 만나요 🌙")
+                 :"오늘의 질문 두 번을 다 썼어요 · 내일 다시 만나요 🌙")
    +'<br><span style="font-size:.72rem;opacity:.8">(토큰비는 로로가 부담해요 🥷)</span>'
-    +(new Date()<new Date(2026,8,28)?'<br><span style=\"display:inline-block;margin-top:6px;font-size:.72rem;letter-spacing:.02em;color:#c9a86a;opacity:.9\">🌕 달이 가장 밝은 밤, 그대의 운도 밝기를 · 풍성한 한가위 되시오</span>':'');}
+    ;}
 updateQuotaUI();
 $("btnShuffle").onclick=()=>{
-  if(quotaLeft()<=0){$("catHint").textContent="오늘의 질문 세 번을 다 썼어요. 카드는 내일 또 열려요 🌙";return;}
+  if(quotaLeft()<=0){$("catHint").textContent="오늘의 질문 두 번을 다 썼어요. 카드는 내일 또 열려요 🌙";return;}
   if(!$("concern").value.trim()){$("concern").focus();return;}
   if(!cat){$("catHint").textContent="⚠ 고민 영역을 하나 골라주세요!";return;}
   order=shuffle([...DECK.keys()]);
