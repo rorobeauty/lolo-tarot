@@ -38,8 +38,9 @@ function _cleanModel(s){
   const m = String(s || "").normalize("NFKC").toLowerCase().match(/gemini-[a-z0-9.\-]+/);
   return m ? m[0].replace(/[.\-]+$/, "") : "";
 }
-const MODEL = _cleanModel(process.env.LOLO_MODEL) || "gemini-3.7-flash";
-const MODEL_CHAIN = [...new Set([MODEL, ...["gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.7-flash"]])];
+const _envModel = _cleanModel(process.env.LOLO_MODEL);
+const MODEL = (_envModel && !/^gemini-2/.test(_envModel)) ? _envModel : "gemini-3.1-flash-lite"; // 2.x는 은퇴(404)라 무시
+const MODEL_CHAIN = [...new Set([MODEL, "gemini-3.1-flash-lite", "gemini-3.5-flash-lite"])]; // 저가 모델만
 
 const MAJORS = ["The Fool","The Magician","The High Priestess","The Empress","The Emperor","The Hierophant","The Lovers","The Chariot","Strength","The Hermit","Wheel of Fortune","Justice","The Hanged Man","Death","Temperance","The Devil","The Tower","The Star","The Moon","The Sun","Judgement","The World"];
 const SUITS = ["Wands","Cups","Swords","Pentacles"];
@@ -67,7 +68,7 @@ function buildPrompt(q, cat, cards){
 `뽑힌 카드: ${names}`,
 "구성: 같은 카드 3장을 로로가 두 갈래로 읽습니다. [직설 해석]은 놓치기 쉬운 문제와 현실적 선택을 직설적으로(겁주기·비난 금지). [교과서 해석]은 전통적 의미·배치 위치·세 카드의 연결 중심으로, 해석이 갈리면 조건을 설명. 억지 반대 의견을 만들지 말고 실제로 다른 부분만 구분. 본문에서는 두 갈래를 '직설 해석'·'교과서 해석'이라고만 부르고, a·bR 같은 데이터 키 이름은 절대 언급 금지.",
 "원칙: 사용자가 말하지 않은 과거·속마음·타인의 의도를 사실처럼 만들지 말 것. 확률·날짜·합격·수익 보장 등 근거 없는 예측 금지. 건강·수명·임신·죽음 예언 금지, 의료·법률·투자 판단 대행 금지. 카드를 이유로 퇴사·관계 단절·큰 지출 단정 권유 금지. 죽음·탑·악마류 카드는 재난이 아닌 변화·구조의 흔들림·집착의 상징으로. 모든 카드를 무조건 좋게 비틀지 말 것. 범용 위로 대신 카드 상징과 이 고민 문장을 직접 연결한 구체적 문장.",
-"분량: 각 항목 t는 한글 최대 2문장(항목당 100자 이내), b는 '카드명 · 상징 요약' 형식 20자 이내. common/diff 각 120자 이내, acts는 이 고민에 맞는 작고 구체적인 행동 3개(각 40자 이내). q는 고민을 60자 이내로 요약.",
+"분량(엄수): 각 항목 t는 1~2문장 60자 이내로 핵심만, b는 '카드명 · 상징 요약' 형식 15자 이내. common/diff 각 70자 이내, acts는 이 고민에 맞는 작고 구체적인 행동 3개(각 25자 이내). q는 고민을 40자 이내로 요약. 짧아도 이 고민과 이 카드에만 맞는 문장일 것.",
 'JSON만 출력하고 다른 텍스트·마크다운 금지: {"q":"...","a":[{"t":"...","b":"..."},{"t":"...","b":"..."},{"t":"...","b":"..."}],"bR":[동일 형식 3개],"common":"...","diff":"...","acts":["...","...","..."]}',
 "JSON에서 a에는 직설 해석 3항목, bR에는 교과서 해석 3항목을 담고, 두 배열의 순서는 [현재 상황, 살펴볼 점, 행동 조언]입니다."
   ].join("\n");

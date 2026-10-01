@@ -37,8 +37,9 @@ function _cleanModel(s){
   const m = String(s || "").normalize("NFKC").toLowerCase().match(/gemini-[a-z0-9.\-]+/);
   return m ? m[0].replace(/[.\-]+$/, "") : "";
 }
-const MODEL = _cleanModel(process.env.LOLO_SAJU_MODEL) || "gemini-3.7-flash";
-const MODEL_CHAIN = [...new Set([MODEL, ...["gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.7-flash"]])];
+const _envModel = _cleanModel(process.env.LOLO_SAJU_MODEL);
+const MODEL = (_envModel && !/^gemini-2/.test(_envModel)) ? _envModel : "gemini-3.1-flash-lite"; // 2.x는 은퇴(404)라 무시
+const MODEL_CHAIN = [...new Set([MODEL, "gemini-3.1-flash-lite", "gemini-3.5-flash-lite"])]; // 저가 모델만
 const RELS = { friend: "친구", couple: "연인", family: "가족", coworker: "동료" };
 
 const STEMS="갑을병정무기경신임계",BRS="자축인묘진사오미신유술해";
@@ -87,7 +88,7 @@ personLine("둘째 사람(상대)", c.p2),
 `관계: ${RELS[c.rel]}`,
 "해석 방식: 위에 계산되어 제공된 각자의 사주 데이터(연주·일주·시주의 간지와 오행)만을 재료로 두 사람의 결을 읽을 것. 오행의 상생(목→화→토→금→수→목)·상극(목↔토, 토↔수, 수↔화, 화↔금, 금↔목)·같은 기운 관계를 실제로 대조해 해석할 것. 전문 용어는 근거 표기에만 쓰고 본문은 일상 언어로. 시주가 없는 사람은 있는 데이터만으로 해석하고 한계를 굳이 언급하지 말 것. 두 사람의 이름을 자연스럽게 불러줄 것.",
 "원칙: 이별·절연·퇴사 등 관계를 끊으라는 단정 권유 금지. 결혼·출산·수명·건강·재산에 대한 예언 금지. '반드시', '절대' 같은 운명 단정 금지. 한쪽을 나쁜 사람으로 만들지 말 것. 좋은 말만 나열하지 말고 부딪힐 수 있는 지점도 솔직하게 하나 이상 짚을 것. 관계 유형에 맞는 어휘를 쓸 것(친구면 우정, 동료면 협업 중심).",
-"분량과 근거: verdict는 궁합 요약 키워드(12자 이내, 점수·퍼센트 금지). sum은 총평 2~3문장(150자 이내, 오행 관계를 자연스럽게 녹일 것). good은 2~3개, clash는 1~2개이며 각 항목은 {\"t\":\"내용(60자 이내)\",\"b\":\"근거(25자 이내)\"} 형태. b에는 위 사주 데이터에 실제로 존재하는 간지·오행 관계만 인용할 것(예: '로로 일간 수 ↔ 공쥬 일간 화 · 상극'). 데이터에 없는 요소를 지어내지 말 것. tips는 실천 3개(각 40자 이내).",
+"분량(엄수)과 근거: verdict는 궁합 요약 키워드(12자 이내, 점수·퍼센트 금지). sum은 총평 1~2문장(90자 이내, 오행 관계를 자연스럽게 녹일 것). good은 2개, clash는 1개이며 각 항목은 {\"t\":\"내용(40자 이내)\",\"b\":\"근거(18자 이내)\"} 형태. b에는 위 사주 데이터에 실제로 존재하는 간지·오행 관계만 인용할 것(예: '로로 일간 수 ↔ 공쥬 일간 화 · 상극'). 데이터에 없는 요소를 지어내지 말 것. tips는 실천 3개(각 40자 이내).",
 'JSON만 출력하고 다른 텍스트·마크다운 금지: {"verdict":"...","sum":"...","good":[{"t":"...","b":"..."}],"clash":[{"t":"...","b":"..."}],"tips":["...","...","..."]}',
   ].join("\n");
 }
