@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>두 명의 타로 리더가 읽는 나의 선택</title>
+
+<!-- ════════════════════════════════════════════════════
+     휴업 스위치  ·  아래 따옴표 안 문구를 비우면("") 다시 문이 열려요
+     ════════════════════════════════════════════════════ -->
+<script>
+var 휴업문구 = "로로 사주(타로)는 이틀동안 100만원이 나와서 파산했어요!";
+var 휴업부제 = "금고를 다시 채우면 돌아올게요 🌙";
+</script>
 <style>
 :root{--ivory:#FAF6EC;--ink:#EAE4D6;--navy:#1E2A4A;--gold:#A8853C;--gold-l:#C9A961;--card:#1A2140;--line:#39456E;--muted:#9AA3C6;--app-bg:#0F152A}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -141,7 +149,13 @@ textarea:focus{outline:2px solid var(--gold-l)}
  .syn ol{padding-left:5mm}
  .sfoot{font-size:8pt;margin-top:2mm}
 }
-body{word-break:keep-all;overflow-wrap:break-word}</style>
+body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ── */
+.closed{text-align:center;padding:30px 16px 28px}
+.closed .moon{font-size:2.3rem;line-height:1;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(201,169,97,.5))}
+.closed h2{font-family:"Apple Myungjo","Nanum Myeongjo",Batang,serif;color:#EAD9A6;font-size:1.12rem;line-height:1.75;letter-spacing:.5px;font-weight:700;word-break:keep-all}
+.closed p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-top:12px;word-break:keep-all}
+.closed .sig{margin-top:18px;font-size:.74rem;color:var(--gold-l);letter-spacing:1px;opacity:.8}
+</style>
 </head>
 <body>
 <div class="app">
@@ -166,6 +180,14 @@ body{word-break:keep-all;overflow-wrap:break-word}</style>
 <h1>로로의 타로 테이블</h1>
 <div class="tag" id="quota" style="margin-top:6px"></div>
 </div>
+
+<!-- 0: 휴업 안내 (맨 위 휴업문구가 비어 있지 않으면 이 패널만 보여요) -->
+<section id="stepClosed" class="panel closed hide">
+<div class="moon">🌙</div>
+<h2 id="closedMsg"></h2>
+<p id="closedSub"></p>
+<div class="sig">— 살림안하는 로로 🥷</div>
+</section>
 
 <!-- 1: 고민 입력 -->
 <section id="stepAsk" class="panel">
@@ -235,9 +257,14 @@ const DECK=[{"en": "The Fool", "ko": "바보", "svg": "<svg viewBox=\"0 0 100 15
 const POS=["현재 상황","살펴볼 점","행동 조언"];
 const CATS={work:{l:"일·진로"},rel:{l:"관계"},new:{l:"새로운 도전"},money:{l:"돈·현실"},mind:{l:"마음·회복"}};
 const $=id=>document.getElementById(id);
+/* 휴업 스위치 (문구는 <head> 맨 위) */
+function isClosed(){return typeof window.휴업문구==="string"&&window.휴업문구.trim().length>0;}
+function closedView(){for(const s of["stepAsk","stepPick","stepLoad","stepResult"])$(s).classList.add("hide");
+  $("closedMsg").textContent=window.휴업문구.trim();$("closedSub").textContent=(typeof window.휴업부제==="string")?window.휴업부제.trim():"";
+  $("stepClosed").classList.remove("hide");$("quota").textContent="잠시 휴업 중";}
 let order=null, picks=[], cat=null, lastCtx=null, reqSeq=0;
 
-function show(step){for(const s of["stepAsk","stepPick","stepLoad","stepResult"])$(s).classList.toggle("hide",s!==step);}
+function show(step){if(isClosed()){closedView();return;}for(const s of["stepAsk","stepPick","stepLoad","stepResult"])$(s).classList.toggle("hide",s!==step);}
 function cryptoInt(n){const max=Math.floor(0x100000000/n)*n,b=new Uint32Array(1);let v;do{crypto.getRandomValues(b);v=b[0];}while(v>=max);return v%n;}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=cryptoInt(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
@@ -259,6 +286,7 @@ function updateQuotaUI(){const el=$("quota");if(!el)return;const n=quotaLeft();
     ;}
 updateQuotaUI();
 $("btnShuffle").onclick=()=>{
+  if(isClosed()){closedView();return;}
   if(quotaLeft()<=0){$("catHint").textContent="오늘의 질문 두 번을 다 썼어요. 카드는 내일 또 열려요 🌙";return;}
   if(!$("concern").value.trim()){$("concern").focus();return;}
   if(!cat){$("catHint").textContent="⚠ 고민 영역을 하나 골라주세요!";return;}
@@ -376,6 +404,7 @@ function beginReading(){
   startFlips();startLoad();interpret();
 }
 $("btnReveal").onclick=()=>{
+  if(isClosed()){closedView();return;}
   lastCtx={q:$("concern").value.trim(),cards:picks.map(n=>DECK[order[n-1]])};
   beginReading();
 };
@@ -437,6 +466,7 @@ $("btnDl").onclick=async()=>{
 };
 $("btnCloseM").onclick=()=>{$("imgModal").classList.add("hide");};
 $("btnAgain").onclick=()=>{order=null;picks=[];cat=null;[...document.querySelectorAll("#cats .chip")].forEach(c=>c.classList.remove("on"));$("concern").value="";show("stepAsk");window.scrollTo({top:0});};
+if(isClosed())closedView();
 </script>
 </body>
 </html>
