@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>로로의 사주궁합</title>
+
+<!-- ════════════════════════════════════════════════════
+     휴업 스위치  ·  따옴표 안에 문구를 넣으면 문이 닫히고, 비우면("") 다시 열려요
+     ════════════════════════════════════════════════════ -->
+<script>
+var 휴업문구 = "";
+var 휴업부제 = "";
+</script>
 <style>
 :root{--ivory:#FAF6EC;--ink:#EAE4D6;--navy:#1E2A4A;--gold:#A8853C;--gold-l:#C9A961;--card:#1A2140;--line:#39456E;--muted:#9AA3C6;--app-bg:#0F152A}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -70,7 +78,19 @@ input:focus{outline:2px solid var(--gold-l)}
 .modal .btn.ghost{background:#141B33}
 .err{color:#E0A8A0;font-size:.85rem;margin-top:8px;line-height:1.5;display:none}
 .hide{display:none}
-body{word-break:keep-all;overflow-wrap:break-word}</style>
+body{word-break:keep-all;overflow-wrap:break-word}/* 관계 칩 6개: 3×2 격자로 어느 폰에서나 고르게 */
+#rels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#rels .chip{padding:9px 6px;text-align:center;white-space:nowrap}
+/* ── 질문 한 줄 (결과지) ── */
+.qline{background:#F1EBDC;border-left:3px solid #C9A961;border-radius:0 9px 9px 0;padding:9px 12px;margin:2px 0 12px;font-size:.84rem;line-height:1.55;color:#2A2722}
+.qline .ql{display:block;font-size:.66rem;color:#8A8272;letter-spacing:.5px;margin-bottom:2px}
+/* ── 휴업 안내 ── */
+.closed{text-align:center;padding:30px 16px 28px}
+.closed .moon{font-size:2.3rem;line-height:1;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(201,169,97,.5))}
+.closed h2{font-family:"Apple Myungjo","Nanum Myeongjo",Batang,serif;color:#EAD9A6;font-size:1.12rem;line-height:1.75;letter-spacing:.5px;font-weight:700;word-break:keep-all}
+.closed p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-top:12px;word-break:keep-all}
+.closed .sig{margin-top:18px;font-size:.74rem;color:var(--gold-l);letter-spacing:1px;opacity:.8}
+</style>
 </head>
 <body>
 <div class="app">
@@ -84,6 +104,14 @@ body{word-break:keep-all;overflow-wrap:break-word}</style>
 <h1>로로의 사주궁합</h1>
 <div class="tag" id="quota"></div>
 </div>
+
+<!-- 0: 휴업 안내 (맨 위 휴업문구가 비어 있지 않으면 이 패널만 보여요) -->
+<section id="stepClosed" class="panel closed hide">
+<div class="moon">🌙</div>
+<h2 id="closedMsg"></h2>
+<p id="closedSub"></p>
+<div class="sig">— 살림안하는 로로 🥷</div>
+</section>
 
 <!-- 1: 입력 -->
 <section id="stepAsk" class="panel">
@@ -100,7 +128,7 @@ body{word-break:keep-all;overflow-wrap:break-word}</style>
 </div>
 
 <div class="pbox">
-<h3>⭐ 상대</h3>
+<h3 id="p2title">⭐ 상대</h3>
 <label>이름 (선택)</label>
 <input type="text" id="n2" maxlength="10" placeholder="예: 공쥬">
 <label>생년월일 (필수)</label>
@@ -112,10 +140,15 @@ body{word-break:keep-all;overflow-wrap:break-word}</style>
 <label>우리는 어떤 사이?</label>
 <div class="cats" id="rels">
 <button class="chip on" data-rel="friend">친구</button>
+<button class="chip" data-rel="fan">최애</button>
 <button class="chip" data-rel="couple">연인</button>
+<button class="chip" data-rel="crush">썸·짝사랑</button>
 <button class="chip" data-rel="family">가족</button>
 <button class="chip" data-rel="coworker">동료</button>
 </div>
+
+<label>두 사람 사이에서 요즘 궁금한 거 한 줄 (선택)</label>
+<input type="text" id="q" maxlength="60" placeholder="예: 요즘 연락이 뜸한데 괜찮은 걸까" autocomplete="off" enterkeyhint="done">
 
 <button class="btn" id="btnGo">언니, 궁합 봐줘</button>
 <div class="err" id="formErr"></div>
@@ -180,11 +213,26 @@ function dayEl(dateStr){return ELK[SEL[pillars(dateStr,"").d.s]];}
 const $=id=>document.getElementById(id);
 const ZODIAC=["원숭이","닭","개","돼지","쥐","소","호랑이","토끼","용","뱀","말","양"];
 const ZEMOJI={"쥐":"🐭","소":"🐮","호랑이":"🐯","토끼":"🐰","용":"🐲","뱀":"🐍","말":"🐴","양":"🐑","원숭이":"🐵","닭":"🐔","개":"🐶","돼지":"🐷"};
-const RELS={friend:"친구",couple:"연인",family:"가족",coworker:"동료"};
+const RELS={friend:"친구",fan:"최애",couple:"연인",crush:"썸·짝사랑",family:"가족",coworker:"동료"};
+/* 관계별 화면 문구: p2=상대 칸 제목 · n2=상대 이름 예시 · def=이름 비웠을 때 결과지 표시 · q=질문 예시 · g/c=결과지 소제목 */
+const REL_UI={
+  friend:  {p2:"⭐ 친구",   n2:"예: 공쥬",       def:"친구",   q:"예: 요즘 연락이 뜸한데 괜찮은 걸까",     g:"잘 맞는 결",  c:"부딪힐 수 있는 결"},
+  fan:     {p2:"⭐ 최애",   n2:"예: 최애 이름",   def:"최애",   q:"예: 이 덕질 오래 갈 수 있을까",         g:"끌리는 결",   c:"조심하면 좋을 결"},
+  couple:  {p2:"⭐ 연인",   n2:"예: 연인 이름",   def:"연인",   q:"예: 자주 다투는데 우리 잘 맞는 걸까",   g:"잘 맞는 결",  c:"부딪힐 수 있는 결"},
+  crush:   {p2:"⭐ 그 사람", n2:"예: 그 사람 이름", def:"그 사람", q:"예: 먼저 연락해도 괜찮을까",           g:"맞닿는 결",   c:"엇갈릴 수 있는 결"},
+  family:  {p2:"⭐ 가족",   n2:"예: 엄마",        def:"가족",   q:"예: 엄마랑 자꾸 부딪히는데 왜 그럴까",   g:"잘 맞는 결",  c:"부딪힐 수 있는 결"},
+  coworker:{p2:"⭐ 동료",   n2:"예: 팀장님",      def:"동료",   q:"예: 같이 프로젝트 해도 될까",           g:"잘 맞는 결",  c:"부딪힐 수 있는 결"}
+};
 let rel="friend", lastCtx=null;
+function applyRelUI(){const u=REL_UI[rel];$("p2title").textContent=u.p2;$("n2").placeholder=u.n2;$("q").placeholder=u.q;}
+/* 휴업 스위치 (문구는 <head> 맨 위) */
+function isClosed(){return typeof window.휴업문구==="string"&&window.휴업문구.trim().length>0;}
+function closedView(){for(const s of["stepAsk","stepLoad","stepResult"])$(s).classList.add("hide");
+  $("closedMsg").textContent=window.휴업문구.trim();$("closedSub").textContent=(typeof window.휴업부제==="string")?window.휴업부제.trim():"";
+  $("stepClosed").classList.remove("hide");$("quota").textContent="잠시 휴업 중";}
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-function show(step){for(const s of["stepAsk","stepLoad","stepResult"])$(s).classList.toggle("hide",s!==step);}
+function show(step){if(isClosed()){closedView();return;}for(const s of["stepAsk","stepLoad","stepResult"])$(s).classList.toggle("hide",s!==step);}
 function zodiac(dateStr){const [y,m,d]=dateStr.split("-").map(Number);const yy=(m<2||(m===2&&d<4))?y-1:y;return ZODIAC[yy%12];}
 
 /* 하루 2회 제한 */
@@ -202,22 +250,26 @@ updateQuotaUI();
 
 [...document.querySelectorAll("#rels .chip")].forEach(ch=>{
   ch.onclick=()=>{rel=ch.dataset.rel;
-    [...document.querySelectorAll("#rels .chip")].forEach(c=>c.classList.toggle("on",c===ch));};
+    [...document.querySelectorAll("#rels .chip")].forEach(c=>c.classList.toggle("on",c===ch));applyRelUI();};
 });
+applyRelUI();
+if(isClosed())closedView();
 
 function formError(msg){const e=$("formErr");e.style.display="block";e.textContent=msg;}
 
 $("btnGo").onclick=()=>{
+  if(isClosed()){closedView();return;}
   $("formErr").style.display="none";
   if(quotaLeft()<=0){formError("오늘의 궁합 두 번을 다 봤어요. 내일 또 봐요 🌙");return;}
   const d1=$("d1").value,d2=$("d2").value;
   if(!d1||!d2){formError("두 사람의 생년월일을 모두 입력해줘요.");return;}
   const today=new Date().toISOString().slice(0,10);
   if(d1>today||d2>today){formError("미래에서 오셨나요? 생년월일을 확인해줘요.");return;}
+  const q=$("q").value.replace(/\s+/g," ").trim().slice(0,60);
   lastCtx={
-    p1:{name:($("n1").value.trim()||"나").slice(0,10),date:d1,time:$("t1").value||""},
-    p2:{name:($("n2").value.trim()||"상대").slice(0,10),date:d2,time:$("t2").value||""},
-    rel:rel};
+    p1:{name:$("n1").value.trim().slice(0,10),date:d1,time:$("t1").value||""},
+    p2:{name:$("n2").value.trim().slice(0,10),date:d2,time:$("t2").value||""},
+    rel:rel,q:q};
   show("stepLoad");
   interpret();
 };
@@ -241,9 +293,9 @@ async function interpret(){
   }
 }
 
-function pcard(p){
+function pcard(p,def){
   const z=zodiac(p.date);
-  return '<div class="pcard"><div class="nm">'+esc(p.name)+'</div><div class="bd">'+esc(p.date)
+  return '<div class="pcard"><div class="nm">'+esc(p.name||def)+'</div><div class="bd">'+esc(p.date)
     +(p.time?'<br>'+esc(p.time)+' 출생':'<br>시간 미상')+'</div><div class="zd">'+ZEMOJI[z]+' '+z+'띠</div><div class="gi">타고난 기운 · '+dayEl(p.date)+'</div></div>';
 }
 function renderSheet(d){
@@ -251,11 +303,12 @@ function renderSheet(d){
   $("sheet").innerHTML=
     '<header><h2><svg class="emb" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="18.5" fill="#141B33" stroke="#A8853C" stroke-width="1.6"/><path d="M24 10 a11 11 0 1 0 5 18 a9 9 0 1 1 -5 -18 Z" fill="#EAD9A6"/><path d="M27 22 l1.4 3 3.2 .4 -2.3 2.2 .5 3.2 -2.8 -1.5 -2.8 1.5 .5 -3.2 -2.3 -2.2 3.2 -.4 Z" fill="#C9A961"/></svg>로로가 읽는 우리 궁합</h2>'
     +'<div style="font-size:.78rem;color:#A8853C;margin-top:5px">'+esc(RELS[c.rel])+' 궁합 · 양력 기준</div></header>'
-    +'<div class="pair">'+pcard(c.p1)+'<div class="amp">✕</div>'+pcard(c.p2)+'</div>'
+    +'<div class="pair">'+pcard(c.p1,"나")+'<div class="amp">✕</div>'+pcard(c.p2,REL_UI[c.rel].def)+'</div>'
+    +(c.q?'<div class="qline"><span class="ql">궁금했던 것</span>'+esc(c.q)+'</div>':'')
     +'<div class="verdict"><span class="vk">'+esc(d.verdict)+'</span></div>'
     +'<p class="sum">'+esc(d.sum)+'</p>'
-    +'<div class="sec g"><h3>잘 맞는 결</h3><ul>'+d.good.map(x=>'<li>'+esc(x.t)+'<span class="basis">근거 · '+esc(x.b)+'</span></li>').join("")+'</ul></div>'
-    +'<div class="sec c"><h3>부딪힐 수 있는 결</h3><ul>'+d.clash.map(x=>'<li>'+esc(x.t)+'<span class="basis">근거 · '+esc(x.b)+'</span></li>').join("")+'</ul></div>'
+    +'<div class="sec g"><h3>'+esc(REL_UI[c.rel].g)+'</h3><ul>'+d.good.map(x=>'<li>'+esc(x.t)+'<span class="basis">근거 · '+esc(x.b)+'</span></li>').join("")+'</ul></div>'
+    +'<div class="sec c"><h3>'+esc(REL_UI[c.rel].c)+'</h3><ul>'+d.clash.map(x=>'<li>'+esc(x.t)+'<span class="basis">근거 · '+esc(x.b)+'</span></li>').join("")+'</ul></div>'
     +'<div class="sec t"><h3>로로의 팁 3가지</h3><ol>'+d.tips.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol></div>'
     +'<div class="sfoot">재미로 보는 궁합입니다.<br>전문가의 상담이나 조언을 대신하지 않아요.</div>';
 }
@@ -312,7 +365,7 @@ $("btnDl").onclick=async()=>{
   }catch(e){$("mhint").textContent="이미지를 꾹 눌러 저장하거나, 화면을 캡처해줘요.";}
 };
 $("btnCloseM").onclick=()=>{$("imgModal").classList.add("hide");};
-$("btnAgain").onclick=()=>{show("stepAsk");window.scrollTo({top:0});};
+$("btnAgain").onclick=()=>{$("q").value="";show("stepAsk");window.scrollTo({top:0});};
 </script>
 </body>
 </html>
