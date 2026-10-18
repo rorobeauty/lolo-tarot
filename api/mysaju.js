@@ -46,6 +46,19 @@ const SEL="목목화화토토금금수수", BEL="수토목목토화화토금금�
 const ELK={"목":"목(木)","화":"화(火)","토":"토(土)","금":"금(金)","수":"수(水)"};
 const ANIMAL=["쥐","소","호랑이","토끼","용","뱀","말","양","원숭이","닭","개","돼지"];
 
+// 듣고 싶은 이야기(주제): 다섯 항목 제목과 추가 지시문. 화면의 제목도 서버가 돌려주는 secs를 씀
+const FOCUS = {
+  all:    { label:"종합",   secs:["타고난 성향","재능과 약점","직업·재물운","인간관계·연애운","현재 고민에 대한 조언"], guide:"" },
+  love:   { label:"연애",   secs:["타고난 연애 스타일","끌리는 사람과 그 이유","사랑에서의 강점과 약점","인연의 흐름","현재 고민에 대한 조언"],
+            guide:"주제 규칙: 다섯 항목 모두 연애·사랑·인연 이야기로만 쓸 것(일·돈·가족 얘기로 새지 말 것). 결혼·출산·이별 예언과 상대 마음 단정 금지. '인연의 흐름'은 명식의 흐름에서 사람이 들어오고 깊어지는 결을 말하되 시기를 단정하지 말 것." },
+  work:   { label:"일·공부", secs:["타고난 적성","일하는 방식과 강점","약점과 보완법","이직·시험·승진의 결","현재 고민에 대한 조언"],
+            guide:"주제 규칙: 다섯 항목 모두 일·공부·커리어 이야기로만 쓸 것. 합격·승진 여부를 단정하지 말고 어떤 방식과 환경이 맞는지로 풀 것. 퇴사·이직을 단정 권유하지 말 것." },
+  money:  { label:"돈",     secs:["돈을 대하는 타고난 태도","나에게 돈이 들어오는 방식","새는 지점","재물의 흐름","현재 고민에 대한 조언"],
+            guide:"주제 규칙: 다섯 항목 모두 돈·소비·재물 이야기로만 쓸 것. 금액·투자 종목·수익 예언 금지, 투자 판단 대행 금지. '재물의 흐름'은 들어오는 결과 지키는 결로 풀 것." },
+  people: { label:"사람",   secs:["타고난 관계 스타일","잘 맞는 사람과 안 맞는 사람의 결","관계에서 반복되는 패턴","올해 신경 쓸 사이","현재 고민에 대한 조언"],
+            guide:"주제 규칙: 다섯 항목 모두 인간관계(친구·가족·직장·연인 포함) 이야기로만 쓸 것. 특정인을 나쁜 사람으로 단정하지 말 것. 절연·손절 권유 금지. '올해 신경 쓸 사이'는 가족·친구·직장 중 어느 결에 마음을 쓰면 좋은지." },
+};
+
 function jdn(y,m,d){const a=Math.floor((14-m)/12),yy=y+4800-a,mm=m+12*a-3;
  return d+Math.floor((153*mm+2)/5)+365*yy+Math.floor(yy/4)-Math.floor(yy/100)+Math.floor(yy/400)-32045;}
 
@@ -104,10 +117,11 @@ function buildPrompt(c, P){
 "당신은 서로 다른 성향의 사주명리 전문가 2명입니다. 아래에 이미 산출된 사주 명식을 바탕으로 각자 독립적으로 해석하세요. 사주는 오락용 상징 해석입니다.",
 `의뢰인: ${c.name} / 양력 ${c.date}${c.time?` ${c.time} 출생`:""}${c.region?` / 출생지 ${c.region}`:""}`,
 `산출된 명식: ${msText(P, c.sex)}`,
+`듣고 싶은 이야기: ${FOCUS[c.focus].label}` + (FOCUS[c.focus].guide ? "\n" + FOCUS[c.focus].guide : ""),
 `현재 고민: ${c.q}`,
 "전문가 구성: [직설적인 현실파]는 친한 친구가 콕 집어 말해주듯 가장 강한 장점·약점·반복되는 패턴을 돌려 말하지 않고 솔직하게. [신중한 정통파]는 다정한 언니처럼 월령·오행 균형·십성·합충을 종합해 근거가 분명한 것만 차분하게 풀어주고, 여러 가능성이 있으면 단정하지 말고 조건을 설명. 두 사람 모두 반드시 해요체(~해요, ~예요)로 쓰고 합니다체는 금지.",
 "가장 중요한 원칙 — 체감되는 해석: 본문(t)은 원리 설명이 아니라 의뢰인이 '어, 이거 완전 나다' 싶은 일상 장면과 행동으로 쓸 것. '겉으로는 ~인데 속으로는 ~', '~할 때 ~하는 편이에요'처럼 구체적인 상황을 그릴 것. 일간·월지·인성·편관·식상 같은 전문용어는 본문(t)에 쓰지 말고 근거(b)에만 쓸 것. 나쁜 예: '일간 임수라 두뇌 회전이 빠른 지능형입니다.' 좋은 예: '할 말을 다 써놓고 보내기 전에 한 번 더 고쳐 쓰는 타입이에요.' 예시 문장은 그대로 쓰지 말고 이 명식에 맞게 새로 쓸 것. 고민 조언은 의뢰인이 쓴 고민의 단어를 받아서 그 상황에 바로 쓸 수 있게.",
-"다섯 항목 순서(두 전문가 동일): 1) 타고난 성향 2) 재능과 약점 3) 직업·재물운 4) 인간관계·연애운 5) 현재 고민에 대한 조언.",
+"다섯 항목 순서(두 전문가 동일): " + FOCUS[c.focus].secs.map((t,i)=>`${i+1}) ${t}`).join(" ") + ".",
 "원칙: 위에 제공된 명식의 간지·오행만 재료로 사용하고 없는 요소를 지어내지 말 것. 사주를 확정된 운명처럼 단정하거나 불안감을 조성하지 말 것. 건강·수명·죽음·임신 예언 금지, 의료·법률·투자 판단 대행 금지. 퇴사·이별 등 큰 결정을 단정 권유하지 말 것. 뻔하거나 누구에게나 맞는 표현 금지, 이 명식과 이 고민에만 맞는 문장으로. 시주가 미상이면 시주 관련 해석은 생략.",
 "분량(엄수): 각 항목 t는 1~2문장, 60자 이내. 각 항목 b는 명식 근거 1줄(15자 이내, 예: '일간 계수 · 월지 인목'). common과 diff는 각 70자 이내(diff에 갈린 이유 포함), 이것도 해요체로 쉽게. acts는 이 고민에 바로 해볼 수 있는 작고 구체적인 행동 3개(각 25자 이내). 짧다고 뻔해지면 안 되고, 이 명식에만 맞는 문장이어야 함. 맞춤법과 오탈자를 스스로 검수할 것.",
 'JSON만 출력하고 다른 텍스트·마크다운 금지: {"a":[{"t":"...","b":"..."},{...},{...},{...},{...}],"bR":[동일 형식 5개],"common":"...","diff":"...","acts":["...","...","..."]}',
@@ -155,10 +169,16 @@ function validateBody(b){
   if (typeof b.region !== "string") return null;
   const region = b.region.trim();
   if (region.length > 20) return null;
-  return { name, date: b.date, time: b.time, sex: b.sex, q, region };
+  // focus (없으면 종합)
+  let focus = "all";
+  if (b.focus !== undefined && b.focus !== null) {
+    if (typeof b.focus !== "string" || !Object.hasOwn(FOCUS, b.focus)) return null;
+    focus = b.focus;
+  }
+  return { name, date: b.date, time: b.time, sex: b.sex, q, region, focus };
 }
 
-function finalizeOut(data, P){
+function finalizeOut(data, P, c){
   if (!data || typeof data !== "object") return null;
   const norm = a => Array.isArray(a) ? a.map(x => typeof x === "string" ? {t:x,b:""} : (x && typeof x.t === "string") ? {t:x.t, b: typeof x.b === "string" ? x.b : ""} : null) : null;
   data.a = norm(data.a); data.bR = norm(data.bR);
@@ -167,6 +187,7 @@ function finalizeOut(data, P){
       || typeof data.common !== "string" || typeof data.diff !== "string"
       || !Array.isArray(data.acts) || data.acts.length !== 3 || !data.acts.every(v => typeof v === "string" && v.trim())) return null;
   data.ms = { pils: msPils(P) };
+  data.focus = c.focus; data.secs = FOCUS[c.focus].secs;
   return data;
 }
 
@@ -222,7 +243,7 @@ export default async function handler(req, res){
     const out = await r.json().catch(() => null);
     const cand = ((out && out.candidates) || [])[0] || {};
     const text = ((cand.content && cand.content.parts) || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
-    const data = finalizeOut(parseJsonLoose(text), P);
+    const data = finalizeOut(parseJsonLoose(text), P, c);
     if (!data) {
       console.error("gemini_bad_json", m, cand.finishReason || "-", "len=" + text.length);
       lastErr = "bad_json"; continue;
