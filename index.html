@@ -155,6 +155,11 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 .closed h2{font-family:"Apple Myungjo","Nanum Myeongjo",Batang,serif;color:#EAD9A6;font-size:1.12rem;line-height:1.75;letter-spacing:.5px;font-weight:700;word-break:keep-all}
 .closed p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-top:12px;word-break:keep-all}
 .closed .sig{margin-top:18px;font-size:.74rem;color:var(--gold-l);letter-spacing:1px;opacity:.8}
+/* ── 다른 테이블로 가는 하단 링크 ── */
+.xnav{margin-top:18px;text-align:center}
+.xnav a.go{display:block;padding:14px;border:1.5px solid var(--gold-l);border-radius:11px;color:#EAD9A6;text-decoration:none;font-weight:700;letter-spacing:.5px;background:rgba(201,169,97,.08)}
+.xnav .sub{margin-top:10px;font-size:.8rem;color:var(--muted)}
+.xnav .sub a{color:var(--gold-l);text-decoration:none;margin:0 6px}
 </style>
 </head>
 <body>
@@ -231,6 +236,8 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 </div>
 </section>
 
+<footer class="xnav"><a class="go" href="/saju.html">🌙 로로의 사주궁합 보러가기</a><div class="sub"><a href="/mysaju.html">사주 보기 →</a></div></footer>
+
 </div>
 <script>
 /*!
@@ -274,20 +281,20 @@ function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt
     [...document.querySelectorAll("#cats .chip")].forEach(c=>c.classList.toggle("on",c===ch));};
 });
 
-const DAILY_MAX=2;
+const DAILY_MAX=3;
 function todayKey(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
 function getQuota(){try{const r=JSON.parse(localStorage.getItem("lolo_q")||"{}");return r.d===todayKey()?r.n||0:0;}catch(e){return 0;}}
 function useQuota(){try{localStorage.setItem("lolo_q",JSON.stringify({d:todayKey(),n:getQuota()+1}));}catch(e){}updateQuotaUI();}
 function quotaLeft(){return Math.max(0,DAILY_MAX-getQuota());}
 function updateQuotaUI(){const el=$("quota");if(!el)return;const n=quotaLeft();
   el.innerHTML=(n>0?("오늘 남은 질문 "+"🌙".repeat(n)+'<span style="opacity:.35">'+"🌙".repeat(DAILY_MAX-n)+"</span>")
-                 :"오늘의 질문 두 번을 다 썼어요 · 내일 다시 만나요 🌙")
+                 :"오늘의 질문 세 번을 다 썼어요 · 내일 다시 만나요 🌙")
    +'<br><span style="font-size:.72rem;opacity:.8">환절기 감기 조심하세요.</span>'
     ;}
 updateQuotaUI();
 $("btnShuffle").onclick=()=>{
   if(isClosed()){closedView();return;}
-  if(quotaLeft()<=0){$("catHint").textContent="오늘의 질문 두 번을 다 썼어요. 카드는 내일 또 열려요 🌙";return;}
+  if(quotaLeft()<=0){$("catHint").textContent="오늘의 질문 세 번을 다 썼어요. 카드는 내일 또 열려요 🌙";return;}
   if(!$("concern").value.trim()){$("concern").focus();return;}
   if(!cat){$("catHint").textContent="⚠ 고민 영역을 하나 골라주세요!";return;}
   order=shuffle([...DECK.keys()]);

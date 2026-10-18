@@ -67,6 +67,8 @@ input:focus{outline:2px solid var(--gold-l)}
 .sec li{margin-bottom:4px}
 .sum{font-size:.86rem;line-height:1.65;margin:10px 2px 14px;text-align:center}
 .sfoot{text-align:center;font-size:.68rem;color:#8A8272;margin-top:12px}
+.sfoot.ev{font-size:.8rem;color:#1E2A4A;background:#F1EBDC;border-radius:9px;padding:11px 12px;line-height:1.6;margin-top:14px}
+.sfoot.ev b{color:#A8853C}
 .actions{display:flex;gap:10px;flex-wrap:wrap}
 .actions .btn{flex:1 1 46%;min-width:150px;margin-top:0}
 .actions .btn.full{flex:1 1 100%}
@@ -81,6 +83,22 @@ input:focus{outline:2px solid var(--gold-l)}
 body{word-break:keep-all;overflow-wrap:break-word}/* 관계 칩 6개: 3×2 격자로 어느 폰에서나 고르게 */
 #rels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 #rels .chip{padding:9px 6px;text-align:center;white-space:nowrap}
+/* ── 궁합 점수 (결과지) ── */
+.score{text-align:center;margin:2px 0 12px;padding:12px 12px 10px;border:1px solid #E3D9C2;border-radius:10px;background:#FDFBF5}
+.score .st{font-size:.76rem;color:#8A8272;letter-spacing:.5px}
+.score .sn{font-family:"Apple Myungjo","Nanum Myeongjo",Batang,serif;font-size:2.7rem;font-weight:700;color:#1E2A4A;line-height:1.1;letter-spacing:-1px;margin-top:2px}
+.score .sn span{font-size:1.15rem;margin-left:2px;color:#A8853C;letter-spacing:0}
+.score .bar{height:7px;background:#E8E1CF;border-radius:999px;margin:8px auto 6px;max-width:260px;overflow:hidden}
+.score .bar i{display:block;height:100%;background:linear-gradient(90deg,#C9A961,#A8853C);border-radius:999px}
+.score .sl{font-size:.8rem;color:#1E2A4A;font-weight:700;letter-spacing:.3px}
+.brk{width:100%;max-width:300px;margin:9px auto 0;border-top:1px dashed #E3D9C2;padding-top:8px}
+.brk .row{display:flex;align-items:center;gap:8px;font-size:.74rem;line-height:1.35;padding:3px 0;text-align:left}
+.brk .k{flex:0 0 58px;color:#1E2A4A;font-weight:700}
+.brk .k small{display:block;font-weight:400;color:#A39B8A;font-size:.62rem}
+.brk .v{flex:1;color:#2A2722}
+.brk .v small{color:#8A8272}
+.brk .dots{flex:0 0 auto;letter-spacing:1px;font-size:.7rem;color:#C9A961}
+.brk .dots .o{color:#DDD4BF}
 /* ── 질문 한 줄 (결과지) ── */
 .qline{background:#F1EBDC;border-left:3px solid #C9A961;border-radius:0 9px 9px 0;padding:9px 12px;margin:2px 0 12px;font-size:.84rem;line-height:1.55;color:#2A2722}
 .qline .ql{display:block;font-size:.66rem;color:#8A8272;letter-spacing:.5px;margin-bottom:2px}
@@ -90,6 +108,11 @@ body{word-break:keep-all;overflow-wrap:break-word}/* 관계 칩 6개: 3×2 격�
 .closed h2{font-family:"Apple Myungjo","Nanum Myeongjo",Batang,serif;color:#EAD9A6;font-size:1.12rem;line-height:1.75;letter-spacing:.5px;font-weight:700;word-break:keep-all}
 .closed p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-top:12px;word-break:keep-all}
 .closed .sig{margin-top:18px;font-size:.74rem;color:var(--gold-l);letter-spacing:1px;opacity:.8}
+/* ── 다른 테이블로 가는 하단 링크 ── */
+.xnav{margin-top:18px;text-align:center}
+.xnav a.go{display:block;padding:14px;border:1.5px solid var(--gold-l);border-radius:11px;color:#EAD9A6;text-decoration:none;font-weight:700;letter-spacing:.5px;background:rgba(201,169,97,.08)}
+.xnav .sub{margin-top:10px;font-size:.8rem;color:var(--muted)}
+.xnav .sub a{color:var(--gold-l);text-decoration:none;margin:0 6px}
 </style>
 </head>
 <body>
@@ -174,6 +197,8 @@ body{word-break:keep-all;overflow-wrap:break-word}/* 관계 칩 6개: 3×2 격�
 </div>
 </section>
 
+<footer class="xnav"><div class="sub"><a href="/">타로 보기</a> · <a href="/mysaju.html">사주 보기</a></div></footer>
+
 </div>
 <script>
 /*!
@@ -218,8 +243,8 @@ const RELS={friend:"친구",fan:"최애",couple:"연인",crush:"썸·짝사랑",
 const REL_UI={
   friend:  {p2:"⭐ 친구",   n2:"예: 공쥬",       def:"친구",   q:"예: 요즘 연락이 뜸한데 괜찮은 걸까",     g:"잘 맞는 결",  c:"부딪힐 수 있는 결"},
   fan:     {p2:"⭐ 최애",   n2:"예: 최애 이름",   def:"최애",   q:"예: 이 덕질 오래 갈 수 있을까",         g:"끌리는 결",   c:"조심하면 좋을 결"},
-  couple:  {p2:"⭐ 연인",   n2:"예: 연인 이름",   def:"연인",   q:"예: 자주 다투는데 우리 잘 맞는 걸까",   g:"잘 맞는 결",  c:"부딪힐 수 있는 결"},
-  crush:   {p2:"⭐ 그 사람", n2:"예: 그 사람 이름", def:"그 사람", q:"예: 먼저 연락해도 괜찮을까",           g:"맞닿는 결",   c:"엇갈릴 수 있는 결"},
+  couple:  {p2:"⭐ 연인",   n2:"예: 연인 이름",   def:"연인",   q:"예: 자주 다투는데 우리 잘 맞는 걸까",   g:"사랑에서 잘 맞는 결",  c:"사랑에서 부딪힐 수 있는 결", t:"오래 가는 법 3가지"},
+  crush:   {p2:"⭐ 그 사람", n2:"예: 그 사람 이름", def:"그 사람", q:"예: 먼저 연락해도 괜찮을까",           g:"맞닿는 결",   c:"엇갈릴 수 있는 결", t:"다가가는 법 3가지"},
   family:  {p2:"⭐ 가족",   n2:"예: 엄마",        def:"가족",   q:"예: 엄마랑 자꾸 부딪히는데 왜 그럴까",   g:"잘 맞는 결",  c:"부딪힐 수 있는 결"},
   coworker:{p2:"⭐ 동료",   n2:"예: 팀장님",      def:"동료",   q:"예: 같이 프로젝트 해도 될까",           g:"잘 맞는 결",  c:"부딪힐 수 있는 결"}
 };
@@ -236,14 +261,14 @@ function show(step){if(isClosed()){closedView();return;}for(const s of["stepAsk"
 function zodiac(dateStr){const [y,m,d]=dateStr.split("-").map(Number);const yy=(m<2||(m===2&&d<4))?y-1:y;return ZODIAC[yy%12];}
 
 /* 하루 2회 제한 */
-const DAILY_MAX=2;
+const DAILY_MAX=3;
 function todayKey(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
 function getQuota(){try{const r=JSON.parse(localStorage.getItem("lolo_saju_q")||"{}");return r.d===todayKey()?r.n||0:0;}catch(e){return 0;}}
 function useQuota(){try{localStorage.setItem("lolo_saju_q",JSON.stringify({d:todayKey(),n:getQuota()+1}));}catch(e){}updateQuotaUI();}
 function quotaLeft(){return Math.max(0,DAILY_MAX-getQuota());}
 function updateQuotaUI(){const el=$("quota");
   el.innerHTML=(quotaLeft()>0?("오늘 남은 궁합 "+"🌙".repeat(quotaLeft())+'<span style="opacity:.35">'+"🌙".repeat(DAILY_MAX-quotaLeft())+"</span>")
-    :"오늘의 궁합 두 번을 다 봤어요 · 내일 다시 만나요 🌙")
+    :"오늘의 궁합 세 번을 다 봤어요 · 내일 다시 만나요 🌙")
     +'<br><span style="font-size:.72rem;opacity:.8">환절기 감기 조심하세요.</span>'
     ;}
 updateQuotaUI();
@@ -260,7 +285,7 @@ function formError(msg){const e=$("formErr");e.style.display="block";e.textConte
 $("btnGo").onclick=()=>{
   if(isClosed()){closedView();return;}
   $("formErr").style.display="none";
-  if(quotaLeft()<=0){formError("오늘의 궁합 두 번을 다 봤어요. 내일 또 봐요 🌙");return;}
+  if(quotaLeft()<=0){formError("오늘의 궁합 세 번을 다 봤어요. 내일 또 봐요 🌙");return;}
   const d1=$("d1").value,d2=$("d2").value;
   if(!d1||!d2){formError("두 사람의 생년월일을 모두 입력해줘요.");return;}
   const today=new Date().toISOString().slice(0,10);
@@ -293,6 +318,7 @@ async function interpret(){
   }
 }
 
+function scoreBand(n){return n>=90?"드물게 잘 맞는 결":n>=80?"잘 맞는 결":n>=70?"맞춰가는 결":n>=60?"배워가는 결":"달라서 배우는 결";}
 function pcard(p,def){
   const z=zodiac(p.date);
   return '<div class="pcard"><div class="nm">'+esc(p.name||def)+'</div><div class="bd">'+esc(p.date)
@@ -304,13 +330,16 @@ function renderSheet(d){
     '<header><h2><svg class="emb" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="18.5" fill="#141B33" stroke="#A8853C" stroke-width="1.6"/><path d="M24 10 a11 11 0 1 0 5 18 a9 9 0 1 1 -5 -18 Z" fill="#EAD9A6"/><path d="M27 22 l1.4 3 3.2 .4 -2.3 2.2 .5 3.2 -2.8 -1.5 -2.8 1.5 .5 -3.2 -2.3 -2.2 3.2 -.4 Z" fill="#C9A961"/></svg>로로가 읽는 우리 궁합</h2>'
     +'<div style="font-size:.78rem;color:#A8853C;margin-top:5px">'+esc(RELS[c.rel])+' 궁합 · 양력 기준</div></header>'
     +'<div class="pair">'+pcard(c.p1,"나")+'<div class="amp">✕</div>'+pcard(c.p2,REL_UI[c.rel].def)+'</div>'
+    +(typeof d.score==="number"?'<div class="score"><div class="st">'+esc(c.p1.name||"나")+' ✕ '+esc(c.p2.name||REL_UI[c.rel].def)+'의 궁합</div><div class="sn">'+Math.round(d.score)+'<span>%</span></div><div class="bar"><i style="width:'+Math.round(d.score)+'%"></i></div><div class="sl">'+esc(scoreBand(d.score))+'</div>'
+      +(Array.isArray(d.detail)&&d.detail.length?'<div class="brk">'+d.detail.map(r=>'<div class="row"><div class="k">'+esc(r.k)+'<small>'+esc(r.h)+'</small></div><div class="v">'+esc(r.v)+' <small>· '+esc(r.d)+'</small></div><div class="dots">'+'●'.repeat(r.n)+'<span class="o">'+'●'.repeat(5-r.n)+'</span></div></div>').join("")+'</div>':'')
+      +'</div>':'')
     +(c.q?'<div class="qline"><span class="ql">궁금했던 것</span>'+esc(c.q)+'</div>':'')
     +'<div class="verdict"><span class="vk">'+esc(d.verdict)+'</span></div>'
     +'<p class="sum">'+esc(d.sum)+'</p>'
     +'<div class="sec g"><h3>'+esc(REL_UI[c.rel].g)+'</h3><ul>'+d.good.map(x=>'<li>'+esc(x.t)+'<span class="basis">근거 · '+esc(x.b)+'</span></li>').join("")+'</ul></div>'
     +'<div class="sec c"><h3>'+esc(REL_UI[c.rel].c)+'</h3><ul>'+d.clash.map(x=>'<li>'+esc(x.t)+'<span class="basis">근거 · '+esc(x.b)+'</span></li>').join("")+'</ul></div>'
-    +'<div class="sec t"><h3>로로의 팁 3가지</h3><ol>'+d.tips.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol></div>'
-    +'<div class="sfoot">재미로 보는 궁합입니다.<br>전문가의 상담이나 조언을 대신하지 않아요.</div>';
+    +'<div class="sec t"><h3>'+esc(REL_UI[c.rel].t||"로로의 팁 3가지")+'</h3><ol>'+d.tips.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol></div>'
+    +'<div class="sfoot ev">마음에 드는 결과가 나왔나요?<br>결과지를 SNS에 올리고 로로를 태그해 주세요.<br><b>추첨을 통해 선물을 드려요 🌙</b></div>';
 }
 
 /* 결과지 이미지 저장 */
