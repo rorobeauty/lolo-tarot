@@ -111,6 +111,11 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 .xnav a.go{display:block;padding:14px;border:1.5px solid var(--gold-l);border-radius:11px;color:#EAD9A6;text-decoration:none;font-weight:700;letter-spacing:.5px;background:rgba(201,169,97,.08)}
 .xnav .sub{margin-top:10px;font-size:.8rem;color:var(--muted)}
 .xnav .sub a{color:var(--gold-l);text-decoration:none;margin:0 6px}
+/* ── 자시(23:30 이후) 출생 날짜 기준 ── */
+.jasi{margin-top:8px;border:1px dashed var(--gold-l);border-radius:10px;padding:10px 12px}
+.jasi .jt{font-size:.8rem;color:#EAD9A6;margin-bottom:6px}
+.jasi .jh{font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.5}
+.jasi .cats{margin-top:0}
 </style>
 </head>
 <body>
@@ -151,6 +156,11 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 
 <label>태어난 시간 (선택 · 모르면 비워둬요)</label>
 <input type="time" id="t1">
+<div class="jasi hide" id="jasiRow1">
+<div class="jt">밤 11시 30분 이후는 사주에서 '자시'라 날짜 기준을 골라야 해요.</div>
+<div class="cats" id="jasi1"><button class="chip on" data-jasi="jeong">다음 날로 (정자시)</button><button class="chip" data-jasi="ya">당일로 (야자시)</button></div>
+<div class="jh">만세력 앱 대부분은 정자시(다음 날)예요. 다른 곳에서 본 일주와 맞추고 싶으면 그쪽 기준으로 골라요.</div>
+</div>
 
 <label>성별</label>
 <div class="cats" id="sexes">
@@ -246,7 +256,7 @@ function _jdn(y,m,d){const a=Math.floor((14-m)/12),yy=y+4800-a,mm=m+12*a-3;retur
 function iljuOf(dateStr){const [y,m,d]=dateStr.split("-").map(Number);const n=(_jdn(y,m,d)+49)%60;return _ST[n%10]+_BR[n%12];}
 function idiomBlock(d,c){
   let ju=null; try{const p=(d.ms&&d.ms.pils||[]).find(x=>x&&x.l==="일주");if(p&&/^[가-힣]{2}$/.test(String(p.v).trim()))ju=String(p.v).trim();}catch(e){}
-  if(!ju||!IDIOM27[ju]){try{ju=iljuOf(c.date);}catch(e){return "";}}
+  if(!ju||!IDIOM27[ju]){try{let dt=c.date;if(isJasiTime(c.time)&&c.jasi!=="ya"){const t=new Date(c.date+"T12:00:00");t.setDate(t.getDate()+1);dt=t.toISOString().slice(0,10);}ju=iljuOf(dt);}catch(e){return "";}}
   const r=IDIOM27[ju]; if(!r) return "";
   return '<div class="idiom27"><div class="il">2027 정미년 · 나의 사자성어 · 일주 '+esc(ju)+'</div><div class="iw"><b>'+esc(r[0])+'</b><span>'+esc(r[1])+'</span></div><div class="im">'+esc(r[2])+'</div><div class="ib">근거 · '+esc(r[3])+'</div></div>';
 }
@@ -279,6 +289,13 @@ updateQuotaUI();
  $("q").placeholder=(FOCUS_UI[focus]||FOCUS_UI.all).ph;};});
 
 function formError(m){const e=$("formErr");e.style.display="block";e.textContent=m;}
+let jasi1="jeong";
+function isJasiTime(v){if(!v)return false;const [H,M]=v.split(":").map(Number);return H*60+M>=23*60+30;}
+function syncJasi1(){$("jasiRow1").classList.toggle("hide",!isJasiTime($("t1").value));}
+$("t1").addEventListener("input",syncJasi1);$("t1").addEventListener("change",syncJasi1);
+[...document.querySelectorAll("#jasi1 .chip")].forEach(ch=>{ch.onclick=()=>{jasi1=ch.dataset.jasi;
+ [...document.querySelectorAll("#jasi1 .chip")].forEach(c=>c.classList.toggle("on",c===ch));};});
+
 
 function toSolar(dateStr, leap){
   const [y,m,d]=dateStr.split("-").map(Number);
@@ -308,7 +325,7 @@ $("btnGo").onclick=()=>{
   const today=new Date().toISOString().slice(0,10);
   if(solar>today){formError("미래에서 오셨나요? 생년월일을 확인해줘요.");return;}
   lastCtx={name:($("n1").value.trim()||"나").slice(0,10),date:solar,origNote,
-    time:$("t1").value||"",sex,region:$("region").value.trim().slice(0,20),q:q.slice(0,200),focus};
+    time:$("t1").value||"",sex,region:$("region").value.trim().slice(0,20),q:q.slice(0,200),focus,jasi:(isJasiTime($("t1").value)?jasi1:"jeong")};
   show("stepLoad");
   interpret();
 };
@@ -344,7 +361,7 @@ function renderSheet(d){
   const pils=(d.ms.pils||[]).map(p=>'<div class="pil"><div class="pl">'+esc(p.l)+'</div><div class="pv">'+esc(p.v)+'</div><div class="pe">'+esc(p.e)+'</div></div>').join("");
   $("sheet").innerHTML=
     '<header><h2>두 명의 명리학자가 바라본 나</h2>'
-    +'<div class="who">'+esc(c.name)+' · '+esc(c.date)+(c.time?' '+esc(c.time)+'생':' · 시간 미상')+(c.origNote?' · '+esc(c.origNote):'')+(c.region?' · '+esc(c.region):'')+(c.focus&&c.focus!=="all"?' · <b>'+esc(fu.label)+' 중심</b>':'')+'</div></header>'
+    +'<div class="who">'+esc(c.name)+' · '+esc(c.date)+(c.time?' '+esc(c.time)+'생'+(isJasiTime(c.time)?(c.jasi==='ya'?' · 야자시(당일)':' · 정자시(다음 날)'):''):' · 시간 미상')+(c.origNote?' · '+esc(c.origNote):'')+(c.region?' · '+esc(c.region):'')+(c.focus&&c.focus!=="all"?' · <b>'+esc(fu.label)+' 중심</b>':'')+'</div></header>'
     +'<div class="ms">'+pils+'</div>'
     +'<div class="qline"><b>고민</b>'+esc(c.q.slice(0,60))+'</div>'
     +idiomBlock(d,c)

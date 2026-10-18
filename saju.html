@@ -113,6 +113,12 @@ body{word-break:keep-all;overflow-wrap:break-word}/* 관계 칩 6개: 3×2 격�
 .xnav a.go{display:block;padding:14px;border:1.5px solid var(--gold-l);border-radius:11px;color:#EAD9A6;text-decoration:none;font-weight:700;letter-spacing:.5px;background:rgba(201,169,97,.08)}
 .xnav .sub{margin-top:10px;font-size:.8rem;color:var(--muted)}
 .xnav .sub a{color:var(--gold-l);text-decoration:none;margin:0 6px}
+/* ── 자시(23:30 이후) 출생 날짜 기준 ── */
+.jasi{margin-top:8px;border:1px dashed var(--gold-l);border-radius:10px;padding:10px 12px}
+.jasi .jt{font-size:.8rem;color:#EAD9A6;margin-bottom:6px}
+.jasi .jh{font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.5}
+.jasi .cats{margin-top:0}
+.pcard .zd small{display:block;font-size:.6rem;color:#C9BFA4;margin-top:1px;letter-spacing:.5px}
 </style>
 </head>
 <body>
@@ -148,6 +154,11 @@ body{word-break:keep-all;overflow-wrap:break-word}/* 관계 칩 6개: 3×2 격�
 <input type="date" id="d1" min="1930-01-01">
 <label>태어난 시간 (선택 · 모르면 비워둬요)</label>
 <input type="time" id="t1">
+<div class="jasi hide" id="jasiRow1">
+<div class="jt">밤 11시 30분 이후는 사주에서 '자시'라 날짜 기준을 골라야 해요.</div>
+<div class="cats" id="jasi1"><button class="chip on" data-jasi="jeong">다음 날로 (정자시)</button><button class="chip" data-jasi="ya">당일로 (야자시)</button></div>
+<div class="jh">만세력 앱 대부분은 정자시(다음 날)예요. 다른 곳에서 본 일주와 맞추고 싶으면 그쪽 기준으로 골라요.</div>
+</div>
 </div>
 
 <div class="pbox">
@@ -158,6 +169,11 @@ body{word-break:keep-all;overflow-wrap:break-word}/* 관계 칩 6개: 3×2 격�
 <input type="date" id="d2" min="1930-01-01">
 <label>태어난 시간 (선택 · 모르면 비워둬요)</label>
 <input type="time" id="t2">
+<div class="jasi hide" id="jasiRow2">
+<div class="jt">밤 11시 30분 이후는 사주에서 '자시'라 날짜 기준을 골라야 해요.</div>
+<div class="cats" id="jasi2"><button class="chip on" data-jasi="jeong">다음 날로 (정자시)</button><button class="chip" data-jasi="ya">당일로 (야자시)</button></div>
+<div class="jh">만세력 앱 대부분은 정자시(다음 날)예요. 다른 곳에서 본 일주와 맞추고 싶으면 그쪽 기준으로 골라요.</div>
+</div>
 </div>
 
 <label>우리는 어떤 사이?</label>
@@ -281,6 +297,18 @@ applyRelUI();
 if(isClosed())closedView();
 
 function formError(msg){const e=$("formErr");e.style.display="block";e.textContent=msg;}
+let jasi1="jeong";
+function isJasiTime(v){if(!v)return false;const [H,M]=v.split(":").map(Number);return H*60+M>=23*60+30;}
+function syncJasi1(){$("jasiRow1").classList.toggle("hide",!isJasiTime($("t1").value));}
+$("t1").addEventListener("input",syncJasi1);$("t1").addEventListener("change",syncJasi1);
+[...document.querySelectorAll("#jasi1 .chip")].forEach(ch=>{ch.onclick=()=>{jasi1=ch.dataset.jasi;
+ [...document.querySelectorAll("#jasi1 .chip")].forEach(c=>c.classList.toggle("on",c===ch));};});
+let jasi2="jeong";
+function syncJasi2(){$("jasiRow2").classList.toggle("hide",!isJasiTime($("t2").value));}
+$("t2").addEventListener("input",syncJasi2);$("t2").addEventListener("change",syncJasi2);
+[...document.querySelectorAll("#jasi2 .chip")].forEach(ch=>{ch.onclick=()=>{jasi2=ch.dataset.jasi;
+ [...document.querySelectorAll("#jasi2 .chip")].forEach(c=>c.classList.toggle("on",c===ch));};});
+
 
 $("btnGo").onclick=()=>{
   if(isClosed()){closedView();return;}
@@ -292,8 +320,8 @@ $("btnGo").onclick=()=>{
   if(d1>today||d2>today){formError("미래에서 오셨나요? 생년월일을 확인해줘요.");return;}
   const q=$("q").value.replace(/\s+/g," ").trim().slice(0,60);
   lastCtx={
-    p1:{name:$("n1").value.trim().slice(0,10),date:d1,time:$("t1").value||""},
-    p2:{name:$("n2").value.trim().slice(0,10),date:d2,time:$("t2").value||""},
+    p1:{name:$("n1").value.trim().slice(0,10),date:d1,time:$("t1").value||"",jasi:(isJasiTime($("t1").value)?jasi1:"jeong")},
+    p2:{name:$("n2").value.trim().slice(0,10),date:d2,time:$("t2").value||"",jasi:(isJasiTime($("t2").value)?jasi2:"jeong")},
     rel:rel,q:q};
   show("stepLoad");
   interpret();
@@ -322,7 +350,7 @@ function scoreBand(n){return n>=90?"드물게 잘 맞는 결":n>=80?"잘 맞는 
 function pcard(p,def){
   const z=zodiac(p.date);
   return '<div class="pcard"><div class="nm">'+esc(p.name||def)+'</div><div class="bd">'+esc(p.date)
-    +(p.time?'<br>'+esc(p.time)+' 출생':'<br>시간 미상')+'</div><div class="zd">'+ZEMOJI[z]+' '+z+'띠</div><div class="gi">타고난 기운 · '+dayEl(p.date)+'</div></div>';
+    +(p.time?'<br>'+esc(p.time)+' 출생'+(isJasiTime(p.time)?(p.jasi==='ya'?' · 야자시':' · 정자시'):''):'<br>시간 미상')+'</div><div class="zd">'+ZEMOJI[z]+' '+z+'띠<small>입춘 기준</small></div><div class="gi">타고난 기운 · '+dayEl(p.date)+'</div></div>';
 }
 function renderSheet(d){
   const c=lastCtx;
