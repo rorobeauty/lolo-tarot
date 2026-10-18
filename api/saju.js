@@ -55,12 +55,18 @@ const STEMS="갑을병정무기경신임계",BRS="자축인묘진사오미신유
 const SEL="목목화화토토금금수수",BEL="수토목목토화화토금금토수";
 const ELK={"목":"목(木)","화":"화(火)","토":"토(土)","금":"금(金)","수":"수(水)"};
 function jdn(y,m,d){const a=Math.floor((14-m)/12),yy=y+4800-a,mm=m+12*a-3;return d+Math.floor((153*mm+2)/5)+365*yy+Math.floor(yy/4)-Math.floor(yy/100)+Math.floor(yy/400)-32045;}
-function pillars(dateStr,timeStr){const [y,m,d]=dateStr.split("-").map(Number);
+// 자시(23:30 이후) 출생의 날짜 기준
+//  "jeong"=정자시: 일주·시주 모두 다음 날 기준 (기본, 만세력 대부분)
+//  "ya"  =야자시: 일주는 당일, 시주는 다음 날 일간 기준 자시 (야자시·조자시 구분설)
+function isJasi(timeStr){ if(!timeStr) return false; const [H,Mi]=timeStr.split(":").map(Number); return H*60+Mi >= 23*60+30; }
+function pillars(dateStr,timeStr,jasi){const [y,m,d]=dateStr.split("-").map(Number);
  let yy=y;if(m<2||(m===2&&d<4))yy=y-1;
  const ys=((yy-4)%10+10)%10, yb=((yy-4)%12+12)%12;
- const dn=(jdn(y,m,d)+49)%60, ds=dn%10, db=dn%12;
+ const night=isJasi(timeStr), shift=(night&&jasi!=="ya")?1:0;   // 정자시: 23:30 이후는 다음 날 일주
+ const dn=(jdn(y,m,d)+shift+49)%60, ds=dn%10, db=dn%12;
+ const hds=(night&&jasi==="ya")?(ds+1)%10:ds;                     // 야자시: 시주 천간은 다음 날 일간으로
  let hp=null;
- if(timeStr){const [H,Mi]=timeStr.split(":").map(Number);const t=(H*60+Mi+30)%1440;const hb=Math.floor(t/120);const hs=((ds%5)*2+hb)%10;hp={s:hs,b:hb};} // 시주: 한국 표준시(동경135°)와 실제 경도 차이 30분 보정 — 자시 23:30~01:30, 유시 17:30~19:30
+ if(timeStr){const [H,Mi]=timeStr.split(":").map(Number);const t=(H*60+Mi+30)%1440;const hb=Math.floor(t/120);const hs=((hds%5)*2+hb)%10;hp={s:hs,b:hb};} // 시주: 한국 표준시(동경135°)와 실제 경도 차이 30분 보정 — 자시 23:30~01:30, 유시 17:30~19:30
  return {y:{s:ys,b:yb},d:{s:ds,b:db},h:hp};}
 function pilName(p){return STEMS[p.s]+BRS[p.b];}
 function pilDesc(P){let t="연주 "+pilName(P.y)+"("+ELK[SEL[P.y.s]]+"·"+ELK[BEL[P.y.b]]+") · 일주 "+pilName(P.d)+"(일간 "+ELK[SEL[P.d.s]]+")";if(P.h)t+=" · 시주 "+pilName(P.h)+"("+ELK[SEL[P.h.s]]+")";return t;}
@@ -113,6 +119,7 @@ function validPerson(p){
   if (p.date < "1900-01-01" || p.date > todaySeoul()) return false;
   if (typeof p.time !== "string") return false;
   if (p.time !== "" && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(p.time)) return false;
+  if (p.jasi !== undefined && p.jasi !== null && p.jasi !== "jeong" && p.jasi !== "ya") return false;
   return true;
 }
 
@@ -124,7 +131,8 @@ function cleanQ(q){
   return t.length > 60 ? null : t;
 }
 function personLine(label, p){
-  return `${label}: ${p.name.trim() || "(이름 없음)"} / 양력 ${p.date}` + (p.time ? ` ${p.time} 출생` : " (태어난 시간 미상)") + " / 사주 데이터: " + pilDesc(pillars(p.date, p.time));
+  const jn = isJasi(p.time) ? (p.jasi === "ya" ? " (자시 출생 · 야자시 적용, 당일 일주)" : " (자시 출생 · 정자시 적용, 다음 날 일주)") : "";
+  return `${label}: ${p.name.trim() || "(이름 없음)"} / 양력 ${p.date}` + (p.time ? ` ${p.time} 출생${jn}` : " (태어난 시간 미상)") + " / 사주 데이터: " + pilDesc(pillars(p.date, p.time, p.jasi));
 }
 
 function buildPrompt(c){
@@ -178,7 +186,8 @@ export default async function handler(req, res){
   const q = cleanQ(body.q);
   if (q === null) return res.status(400).json({error:"bad_input"});
 
-  const sc = compatScore(pillars(body.p1.date, ""), pillars(body.p2.date, ""));   // 시간은 점수에 안 씀(넣고 빼도 숫자 안 변함)
+  // 점수는 해석과 같은 일주를 씀. 시간은 자시(23:30 이후)·정자시일 때만 일주를 다음 날로 넘겨 영향을 줌
+  const sc = compatScore(pillars(body.p1.date, body.p1.time, body.p1.jasi), pillars(body.p2.date, body.p2.time, body.p2.jasi));
   const PROMPT = buildPrompt({ p1: body.p1, p2: body.p2, rel: body.rel, q, score: sc.score, why: sc.why });
   const MAXTOK = 2200;
   const t0 = Date.now();

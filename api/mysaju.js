@@ -80,7 +80,11 @@ function sajuMonth(m, d){
   return 11;                 // 12/7~12/31 자월
 }
 
-function fourPillars(dateStr, timeStr){
+// 자시(23:30 이후) 출생의 날짜 기준
+//  "jeong"=정자시: 일주·시주 모두 다음 날 기준 (기본, 만세력 대부분)
+//  "ya"  =야자시: 일주는 당일, 시주는 다음 날 일간 기준 자시 (야자시·조자시 구분설)
+function isJasi(timeStr){ if(!timeStr) return false; const [H,Mi]=timeStr.split(":").map(Number); return H*60+Mi >= 23*60+30; }
+function fourPillars(dateStr, timeStr, jasi){
   const [y,m,d]=dateStr.split("-").map(Number);
   // 연주 (입춘 기준 근사) — 1월 전체와 2/1~2/3은 직전 연도 연간 사용
   let yy=y; if(m<2||(m===2&&d<4)) yy=y-1;
@@ -91,10 +95,12 @@ function fourPillars(dateStr, timeStr){
   const mStart=((ys%5)*2+2)%10;                 // 갑기→병인 시작
   const ms=(mStart+(sm-1))%10;
   // 일주
-  const dn=(jdn(y,m,d)+49)%60, ds=dn%10, db=dn%12;
+  const night=isJasi(timeStr), shift=(night&&jasi!=="ya")?1:0;   // 정자시: 23:30 이후는 다음 날 일주
+  const dn=(jdn(y,m,d)+shift+49)%60, ds=dn%10, db=dn%12;
+  const hds=(night&&jasi==="ya")?(ds+1)%10:ds;                     // 야자시: 시주 천간은 다음 날 일간으로
   // 시주
   let hp=null;
-  if(timeStr){const [H,Mi]=timeStr.split(":").map(Number);const t=(H*60+Mi+30)%1440;const hb=Math.floor(t/120);const hs=((ds%5)*2+hb)%10;hp={s:hs,b:hb};} // 시주: 한국 표준시(동경135°)와 실제 경도 차이 30분 보정 — 자시 23:30~01:30, 유시 17:30~19:30
+  if(timeStr){const [H,Mi]=timeStr.split(":").map(Number);const t=(H*60+Mi+30)%1440;const hb=Math.floor(t/120);const hs=((hds%5)*2+hb)%10;hp={s:hs,b:hb};} // 시주: 한국 표준시(동경135°)와 실제 경도 차이 30분 보정 — 자시 23:30~01:30, 유시 17:30~19:30
   return {y:{s:ys,b:yb}, m:{s:ms,b:mb}, d:{s:ds,b:db}, h:hp};
 }
 const pn=p=>STEMS[p.s]+BRS[p.b];
@@ -115,7 +121,7 @@ function msPils(P){
 function buildPrompt(c, P){
   return [
 "당신은 서로 다른 성향의 사주명리 전문가 2명입니다. 아래에 이미 산출된 사주 명식을 바탕으로 각자 독립적으로 해석하세요. 사주는 오락용 상징 해석입니다.",
-`의뢰인: ${c.name} / 양력 ${c.date}${c.time?` ${c.time} 출생`:""}${c.region?` / 출생지 ${c.region}`:""}`,
+`의뢰인: ${c.name} / 양력 ${c.date}${c.time?` ${c.time} 출생`:""}${isJasi(c.time)?(c.jasi==="ya"?" (자시 출생 · 야자시 적용, 당일 일주)":" (자시 출생 · 정자시 적용, 다음 날 일주)"):""}${c.region?` / 출생지 ${c.region}`:""}`,
 `산출된 명식: ${msText(P, c.sex)}`,
 `듣고 싶은 이야기: ${FOCUS[c.focus].label}` + (FOCUS[c.focus].guide ? "\n" + FOCUS[c.focus].guide : ""),
 `현재 고민: ${c.q}`,
@@ -175,7 +181,13 @@ function validateBody(b){
     if (typeof b.focus !== "string" || !Object.hasOwn(FOCUS, b.focus)) return null;
     focus = b.focus;
   }
-  return { name, date: b.date, time: b.time, sex: b.sex, q, region, focus };
+  // jasi (자시 출생 날짜 기준, 없으면 정자시)
+  let jasi = "jeong";
+  if (b.jasi !== undefined && b.jasi !== null) {
+    if (b.jasi !== "jeong" && b.jasi !== "ya") return null;
+    jasi = b.jasi;
+  }
+  return { name, date: b.date, time: b.time, sex: b.sex, q, region, focus, jasi };
 }
 
 function finalizeOut(data, P, c){
@@ -202,7 +214,7 @@ export default async function handler(req, res){
   const c = validateBody(b);
   if (!c) return res.status(400).json({error:"bad_input"});
 
-  const P = fourPillars(c.date, c.time);
+  const P = fourPillars(c.date, c.time, c.jasi);
 
   const PROMPT = buildPrompt(c, P);
   const MAXTOK = 3000;
