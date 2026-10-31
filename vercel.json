@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/ziwei-interpret.js": {
+      "maxDuration": 240,
+      "includeFiles": "ziwei-*"
+    }
+  }
+}
