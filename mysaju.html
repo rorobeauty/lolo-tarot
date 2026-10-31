@@ -168,8 +168,6 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 <button class="chip" data-sex="m">남성</button>
 </div>
 
-<label>태어난 지역 (선택)</label>
-<input type="text" id="region" maxlength="20" placeholder="예: 서울">
 
 <label>어떤 이야기를 듣고 싶어요?</label>
 <div class="cats" id="focus">
@@ -463,7 +461,7 @@ $("btnGo").onclick=()=>{
   const today=new Date().toISOString().slice(0,10);
   if(solar>today){formError("미래에서 오셨나요? 생년월일을 확인해줘요.");return;}
   lastCtx={name:($("n1").value.trim()||"나").slice(0,10),date:solar,origNote,
-    time:$("t1").value||"",sex,region:$("region").value.trim().slice(0,20),q:q.slice(0,200),focus,jasi:(isJasiTime($("t1").value)?jasi1:"jeong")};
+    time:$("t1").value||"",sex,region:"",q:q.slice(0,200),focus,jasi:(isJasiTime($("t1").value)?jasi1:"jeong")};
   show("stepLoad");
   interpret();
 };
