@@ -29,6 +29,11 @@ label{display:block;font-size:.78rem;color:var(--muted);margin:10px 0 4px}
 input[type=text],input[type=date],input[type=time],textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit;font-size:.95rem;background:transparent;color:var(--ink);color-scheme:dark}
 textarea{min-height:70px;resize:vertical}
 input:focus,textarea:focus{outline:2px solid var(--gold-l)}
+.birth-fields{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;margin-top:8px}
+.birth-fields select{width:100%;min-width:0;min-height:44px;border:1px solid var(--line);border-radius:9px;padding:10px 8px;font:inherit;font-size:1rem;background:transparent;color:var(--ink);color-scheme:dark}
+.birth-fields select:focus{outline:2px solid var(--gold-l)}
+.birth-fields select:disabled{opacity:.55}
+.birth-fields option{background:var(--card);color:var(--ink)}
 .cats{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .chip{padding:8px 14px;border:1.5px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);font-size:.85rem;cursor:pointer}
 .chip.on{border-color:var(--gold-l);background:rgba(201,169,97,.18);font-weight:700;color:#EAD9A6}
@@ -152,7 +157,12 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 <button class="chip" data-cal="lunar">음력</button>
 </div>
 <div class="leap" id="leapRow"><input type="checkbox" id="leap" style="width:auto"><label for="leap" style="margin:0;display:inline">윤달이에요</label></div>
-<input type="date" id="d1" min="1930-01-01" style="margin-top:8px">
+<div class="birth-fields" role="group" aria-label="생년월일">
+<select id="birthYear" name="birthYear" aria-label="태어난 연도" autocomplete="bday-year" required></select>
+<select id="birthMonth" name="birthMonth" aria-label="태어난 월" autocomplete="bday-month" required></select>
+<select id="birthDay" name="birthDay" aria-label="태어난 일" autocomplete="bday-day" required></select>
+</div>
+<input type="hidden" id="d1">
 
 <label>태어난 시간 (선택 · 모르면 비워둬요)</label>
 <input type="time" id="t1">
@@ -398,6 +408,36 @@ function idiomBlock(d,c){
 
 let cal="solar", sex="f", lastCtx=null;
 
+function syncBirthDateValue(){
+  const y=$("birthYear").value,m=$("birthMonth").value,d=$("birthDay").value;
+  $("d1").value=y&&m&&d?y+"-"+m.padStart(2,"0")+"-"+d.padStart(2,"0"):"";
+}
+function refreshBirthDays(){
+  const y=Number($("birthYear").value),m=Number($("birthMonth").value);
+  const day=$("birthDay"),previous=day.value;
+  const max=cal==="lunar"?30:(m?new Date(y,m,0).getDate():31);
+  let options='<option value="">일</option>';
+  for(let d=1;d<=max;d++)options+='<option value="'+d+'">'+d+'일</option>';
+  day.innerHTML=options;
+  day.disabled=!m;
+  if(m&&previous&&Number(previous)<=max)day.value=previous;
+  syncBirthDateValue();
+}
+function initBirthDatePicker(){
+  let years="",months='<option value="">월</option>';
+  for(let y=new Date().getFullYear();y>=1930;y--)years+='<option value="'+y+'">'+y+'년</option>';
+  for(let m=1;m<=12;m++)months+='<option value="'+m+'">'+m+'월</option>';
+  $("birthYear").innerHTML=years;
+  $("birthYear").value="2007";
+  $("birthMonth").innerHTML=months;
+  $("birthYear").addEventListener("change",refreshBirthDays);
+  $("birthMonth").addEventListener("change",refreshBirthDays);
+  $("birthDay").addEventListener("change",syncBirthDateValue);
+  refreshBirthDays();
+}
+initBirthDatePicker();
+
+
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function show(step){if(isClosed()){closedView();return;}for(const s of["stepAsk","stepLoad","stepResult"])$(s).classList.toggle("hide",s!==step);}
 function inApp(){return /KAKAOTALK|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent)||/NAVER\(/i.test(navigator.userAgent);}
@@ -417,7 +457,7 @@ updateQuotaUI();
 
 [...document.querySelectorAll("#cals .chip")].forEach(ch=>{ch.onclick=()=>{cal=ch.dataset.cal;
  [...document.querySelectorAll("#cals .chip")].forEach(c=>c.classList.toggle("on",c===ch));
- $("leapRow").classList.toggle("show",cal==="lunar");};});
+ $("leapRow").classList.toggle("show",cal==="lunar");refreshBirthDays();};});
 [...document.querySelectorAll("#sexes .chip")].forEach(ch=>{ch.onclick=()=>{sex=ch.dataset.sex;
  [...document.querySelectorAll("#sexes .chip")].forEach(c=>c.classList.toggle("on",c===ch));};});
 [...document.querySelectorAll("#focus .chip")].forEach(ch=>{ch.onclick=()=>{focus=ch.dataset.focus;
