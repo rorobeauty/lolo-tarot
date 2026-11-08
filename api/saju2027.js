@@ -43,9 +43,9 @@ function _cleanModel(s){
   const m = String(s || "").normalize("NFKC").toLowerCase().match(/gemini-[a-z0-9.\-]+/);
   return m ? m[0].replace(/[.\-]+$/, "") : "";
 }
-const _envModel = _cleanModel(process.env.LOLO_SAJU2027_MODEL || process.env.LOLO_MYSAJU_MODEL); // 2027 전용 모델 지정이 없으면 기존 사주와 같은 모델
-const MODEL = (_envModel && !/^gemini-2/.test(_envModel)) ? _envModel : "gemini-3.1-flash-lite"; // 2.x는 은퇴(404)라 무시
-const MODEL_CHAIN = [...new Set([MODEL, "gemini-3.1-flash-lite", "gemini-3.5-flash-lite"])]; // 저가 모델만
+const _envModel = _cleanModel(process.env.LOLO_SAJU2027_MODEL); // 기존 개인 사주의 모델 설정은 바꾸지 않음
+const MODEL = (_envModel && !/^gemini-2/.test(_envModel)) ? _envModel : "gemini-3.8-flash";
+const MODEL_CHAIN = [MODEL, "gemini-3.8-flash"]; // 품질 검증 실패 시 한 번만 재작성
 
 const STEMS="갑을병정무기경신임계", BRS="자축인묘진사오미신유술해";
 const SEL="목목화화토토금금수수", BEL="수토목목토화화토금금토수";
@@ -447,7 +447,9 @@ function consultValid(data,E,c){
  for(let i=0;i<3;i++){const v=km[i],ev=v&&E[v.id];if(!ev||!ev.row||v.role!==roles[i]||!text(v.why,45,350)||!text(v.action,25,220)||ev.row.start<=prev)return bad('month_order_or_detail');if(v.role==='시도'&&ev.row[axis].level<0)return bad('try_month_conflicts_graph');prev=ev.row.start;}
  const selected=new Set(km.map(v=>v.id));for(const k of ['a','bR'])if(data[k][6].refs.some(id=>!selected.has(id)))return bad('important_section_month_refs');
  if(!text(data.common,65,400)||!text(data.diff,65,450)||!Array.isArray(data.acts)||data.acts.length!==4||!data.acts.every(s=>text(s,20,180)))return bad('summary_schema');
- const all=consultAllText(data);if(all.length<2600||all.length>8500)return bad('total_length');if(consultUnsafe(all))return bad('absolute_or_major_decision');
+ const all=consultAllText(data);if(all.length<2600||all.length>8500)return bad('total_length');if(consultUnsafe(all)||/유일한\s*(?:길|정답|방법)/.test(all))return bad('absolute_or_major_decision');
+ if(/(?:입니다|합니다|됩니다|있습니다|없습니다|겠습니다)(?=[.!?\s]|$)/.test(all))return bad('formal_style');
+ if(/최소\s*\d+개월.{0,12}(?:생활비|예비비|생활\s*가능)/.test(all)&&!/가상\s*예시|예를\s*들|가령/.test(all))return bad('unsupported_fixed_financial_rule');
  if(consultFactConflict(all,E))return bad('computed_fact_conflict');
  if(/의직|퇴샤|승찐|게약|계악/.test(all))return bad('core_word_typo');
  // 날짜는 서버가 표시합니다. AI 본문에 특정 날짜·잘못된 해의 1월을 쓰지 못하게 합니다.
@@ -494,7 +496,10 @@ function buildPrompt(c,P,Y,F){
  '말투: 자연스럽고 다정한 해요체만 써요. 현실파(a)는 금전·시간·계약·실행 순서에, 정통파(bR)는 준비 기반·생활 균형·관계·시기의 연결에 무게를 둬요. 같은 결론이어도 판단 기준이 달라야 해요. 억지 반대나 말만 바꾼 반복은 피하세요.',
  '사실과 가정: Q에 직접 적힌 현재 상황만 사실이에요. 직업·재정·연애 상태·과거 경험·상대 마음을 모르면 "그런 상황이라면"처럼 조건으로 나누세요. 질문을 사주가 알아맞혔다고 쓰지 마세요. 상대가 나를 좋아한다거나 어떤 일이 실제로 생긴다고 단정하지 마세요.',
  '표현 안전: 절대/무조건/반드시/100% 같은 강한 단어 대신 조건과 확인할 기준을 써요. 퇴사하세요, 퇴사하지 마세요, 이직해야 해요, 결혼하세요, 투자하세요 같은 큰 결정 명령과 합격·수익·승진·임신·건강·수명의 보장은 금지해요. 준비와 비교 방법은 구체적으로 말해요. 의료·법률·투자를 대신 판단하지 않아요.',
- '쉬운 말: 전문용어는 refs로만 연결돼요. 본문에 신강/신약/편재/정재/정관/편관/식신/겁재/비견/천간/오행/12운성/십신/반합/육합/정계충을 쓰지 마세요. 사전 문장의 내용을 일상 언어로 풀어요. 없는 기운이나 계산하지 않은 대운·용신·격국도 만들지 않아요.',
+ '쉬운 말: 전문용어는 refs로만 연결하고 본문은 사전 문장의 내용을 일상 언어로 풀어요. 없는 기운이나 계산하지 않은 전문 이론도 만들지 않아요. 모든 문장을 해요체로 쓰고 보고서식 합니다체는 쓰지 않아요.',
+ '상담은 이유와 판단 기준이 남아야 해요. 다른 항목에서 이미 한 말은 새 이유·조건·구체적 행동 없이 반복하지 마세요. 준비 단계의 정보 수집, 시도 단계의 작은 실제 행동, 점검 단계의 결과 비교를 구분해요. 깊이와 길이는 다르며 같은 결론을 열 번 강조하지 않아요.',
+ '깊은 상담의 steps는 서버 월 계획과 일대일 대응해요: '+plan.map((p,i)=>i+'번째 행동 = '+p.role+' / '+facts[p.id]).join(' | ')+'. 시도 달에 작은 지원·대화·실행을 해보고 점검 달에는 그 결과를 비교해요. 시도 달이 상반기인데 하반기나 점검 달 이후부터 처음 움직이라고 미루지 마세요. 다른 본문·요약도 이 순서와 맞춰요.',
+ '재정 조건은 개인 자료가 없어 알 수 없어요. 최소 몇 개월 생활비 같은 획일적인 기준을 만들지 말고, 본인의 필수지출·예상 준비기간·현재 저축으로 확인할 항목을 줘요. 수치를 들면 개인에게 맞춘 사실이 아닌 가상 예시라고 짧게 표시해요. 한 선택만 유일하게 옳다는 말도 하지 마세요.',
  '분량과 깊이: 전체 본문 목표 3800~5200자. 짧은 운세 문구가 아니라 조건과 실행 기준이 남는 상담이에요. 아래 문장 수를 채우되 같은 말을 늘어놓지 말고 이유→생활 예시→현실 조건→행동으로 나눠요.',
  'a,bR: 각각 7항목. 순서는 '+SECS2027.join(' / ')+'. 각 t는 완성된 문장 4개 정도(100~180자), refs는 관련 근거 ID 1~3개. 첫 항목은 물어본 질문에 바로 답하되 선택을 대신 결정하지 않아요. 두 번째는 작년과 올해의 상징 방향 변화이지 과거 경험을 알아맞히는 글이 아니에요. 연애 상태를 모르면 만나는 사람이 있는 경우/없는 경우를 조건부로 구분해요. 질문과 상관없는 직업·관계 상태를 지어내지 않아요.',
  'consult.a,consult.b: 첫 질문 답을 자세히 설명하는 부분이에요. why는 완성된 문장 5개(120~220자)로 왜 그런 답인지 생활 맥락과 연결해요. favorable는 문장 4개(90~170자)로 어떤 준비·현실 조건에서 그 방향을 검토할지 설명해요. caution도 문장 4개(90~170자)로 무엇이 아직 확인되지 않았고 어느 조건부터 점검할지 말해요. steps는 시간순 행동 3개이며 각 행동은 완성된 문장 2개(40~90자)예요. 짧은 구호로 끝내지 마세요.',
@@ -576,9 +581,10 @@ export default async function handler(req, res){
   const MAXTOK = 8500; // 심층상담·선택 비교·핵심 3개월, 본문 목표 3200~4500자
   const t0 = Date.now();
   let lastErr = "none", sawRate = false, repairNote = "", lastDiagnostic=null;
+  const usage=[];
   const previewDiagnostics=process.env.VERCEL_ENV==='preview'&&b.previewDiagnostics===true;
   const schema=consultSchema(consultEvidence(Y,F,c));
-  for (const m of MODEL_CHAIN.slice(0,2)) {
+  for (const [attempt,m] of MODEL_CHAIN.slice(0,2).entries()) {
     const left = 80000 - (Date.now() - t0);
     if (left < 8000) break;
     let r;
@@ -610,6 +616,7 @@ export default async function handler(req, res){
       lastErr = String(r.status); continue;
     }
     const out = await r.json().catch(() => null);
+    usage.push({model:m,promptTokens:out?.usageMetadata?.promptTokenCount||0,outputTokens:out?.usageMetadata?.candidatesTokenCount||0,thoughtTokens:out?.usageMetadata?.thoughtsTokenCount||0});
     const cand = ((out && out.candidates) || [])[0] || {};
     const text = ((cand.content && cand.content.parts) || []).filter(p => !p.thought).map(p => p.text || "").join("\n");
     const parsed=parseJsonLoose(text),generated=JSON.stringify(parsed);
@@ -620,7 +627,8 @@ export default async function handler(req, res){
       repairNote="\n앞선 응답의 검증 실패: "+(finalizeOut.lastError||"parse")+". 이미 충분히 쓴 문장은 줄이지 말고 오류가 있는 부분만 수정해 전체 JSON을 다시 작성하세요. 금지 전문용어는 일상말로 바꾸고 모든 항목의 최소 분량을 유지하세요. 검사 요약: "+JSON.stringify(consultDiagnostics(parsed,consultEvidence(Y,F,c),c))+"\n이전 작성 JSON: "+generated;
       lastErr = "quality_check"; continue;
     }
-    if (m !== MODEL_CHAIN[0]) console.log("gemini_fallback_ok", m);
+    if (attempt>0) console.log("gemini_rewrite_ok", m);
+    data.generation={model:m,attempts:attempt+1,usage};
     return res.status(200).json(data);
   }
   if (sawRate) return res.status(429).json({error:"rate_limited"});
