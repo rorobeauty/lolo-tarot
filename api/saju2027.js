@@ -575,7 +575,8 @@ export default async function handler(req, res){
   const PROMPT = buildPrompt(c, P, Y, F);
   const MAXTOK = 8500; // 심층상담·선택 비교·핵심 3개월, 본문 목표 3200~4500자
   const t0 = Date.now();
-  let lastErr = "none", sawRate = false, repairNote = "";
+  let lastErr = "none", sawRate = false, repairNote = "", lastDiagnostic=null;
+  const previewDiagnostics=process.env.VERCEL_ENV==='preview'&&b.previewDiagnostics===true;
   const schema=consultSchema(consultEvidence(Y,F,c));
   for (const m of MODEL_CHAIN.slice(0,2)) {
     const left = 80000 - (Date.now() - t0);
@@ -614,6 +615,7 @@ export default async function handler(req, res){
     const parsed=parseJsonLoose(text),generated=JSON.stringify(parsed);
     const data = finalizeOut(parsed, P, c, Y, F);
     if (!data) {
+      if(previewDiagnostics)lastDiagnostic={code:finalizeOut.lastError||'parse',stats:consultDiagnostics(parsed,consultEvidence(Y,F,c),c),raw:parsed};
       console.error("gemini_bad_json", m, cand.finishReason || "-", "len=" + text.length, "validation="+(finalizeOut.lastError||"parse"),"terms="+JSON.stringify(consultDiagnostics(parsed,consultEvidence(Y,F,c),c).forbiddenTerms));
       repairNote="\n앞선 응답의 검증 실패: "+(finalizeOut.lastError||"parse")+". 이미 충분히 쓴 문장은 줄이지 말고 오류가 있는 부분만 수정해 전체 JSON을 다시 작성하세요. 금지 전문용어는 일상말로 바꾸고 모든 항목의 최소 분량을 유지하세요. 검사 요약: "+JSON.stringify(consultDiagnostics(parsed,consultEvidence(Y,F,c),c))+"\n이전 작성 JSON: "+generated;
       lastErr = "quality_check"; continue;
@@ -622,5 +624,5 @@ export default async function handler(req, res){
     return res.status(200).json(data);
   }
   if (sawRate) return res.status(429).json({error:"rate_limited"});
-  return res.status(502).json({error: lastErr === "quality_check" ? "quality_check" : "upstream_" + lastErr});
+  return res.status(502).json({error: lastErr === "quality_check" ? "quality_check" : "upstream_" + lastErr,...(previewDiagnostics?{diagnostics:lastDiagnostic}:{})});
 }
