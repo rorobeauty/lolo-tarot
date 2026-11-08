@@ -144,6 +144,23 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 .flow27 details p{margin:8px 0}.flow27 .fl-note{font-size:.64rem;margin:10px 0 0}
 @media(max-width:420px){.flow27{padding:14px 10px}.flow27 .fl-months{grid-template-columns:repeat(6,minmax(0,1fr))}.flow27 .fl-month{font-size:.72rem}}
 
+
+/* 기존 결과지의 질문 상담과 선택 기준을 보강합니다. */
+.qdeep{margin:12px 0 16px;border-top:1px solid var(--s-line);padding-top:4px}
+.rd .qdeep h5{font-size:.72rem;color:var(--burg);margin:10px 0 4px;font-weight:700}
+.rd.b .qdeep h5{color:#8c692b}.rd .qdeep p{font-size:.76rem;line-height:1.75}
+.qdeep ol{padding-left:18px;font-size:.75rem;line-height:1.75}.qdeep li+li{margin-top:5px}
+.choice27,.keymonths27{margin:14px 0;background:#fff;border:1px solid var(--s-line);border-radius:10px;padding:16px 13px}
+.choice27 h3,.keymonths27 h3{font-family:'Apple Myungjo',Batang,serif;color:var(--burg);font-size:1rem;margin-bottom:7px}
+.choice27 .ctitle{font-size:.78rem;color:#756b59;line-height:1.65;margin-bottom:12px}
+.choice-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice-option{padding:12px;background:#F7F3E9;border-radius:8px}
+.choice-option h4{font-size:.82rem;color:var(--burg);margin:0 0 9px}.choice-option h5{font-size:.7rem;color:#756b59;margin:10px 0 4px}
+.choice-option p,.choice-criterion{font-size:.76rem;line-height:1.75}.choice-criterion{padding-top:12px;margin-top:12px;border-top:1px solid var(--s-line)}
+.keymonths-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.keymonth{border-top:3px solid var(--gold);background:#F7F3E9;padding:12px 10px;border-radius:6px}
+.keymonth h4{font-size:.85rem;color:var(--burg);margin:4px 0 6px}.keymonth .km-role{font-size:.66rem;color:#8c692b;font-weight:700}.keymonth p{font-size:.74rem;line-height:1.7}.keymonth .km-action{padding-top:9px;margin-top:9px;border-top:1px solid var(--s-line)}
+.keymonth .km-date{display:block;font-size:.61rem;line-height:1.6;color:#8a8272;margin:5px 0 9px}
+@media(max-width:520px){.choice-options,.keymonths-grid{grid-template-columns:1fr}.keymonth{padding:13px 12px}}
+
 </style>
 </head>
 <body>
@@ -203,7 +220,7 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 
 
 <label>2027년에 가장 궁금한 것은 무엇인가요? (필수)</label>
-<textarea id="q" maxlength="200" placeholder="예: 2027년에 지금 하는 일을 계속 밀고 가도 될까요?"></textarea>
+<textarea id="q" maxlength="200" placeholder="예: 2027년에 이직을 준비해도 될까요? 현재 상황도 함께 적어주세요."></textarea>
 
 <button class="btn" id="btnGo">두 분께 2027년을 여쭤볼게요</button>
 <div class="err" id="formErr"></div>
@@ -212,7 +229,7 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 
 <!-- 2: 로딩 -->
 <section id="stepLoad" class="panel hide">
-<div class="loading"><div class="orb"></div><div class="load-msg">두 명리학자가 2027년 흐름을 펼쳐 보고 있어요.</div></div>
+<div class="loading"><div class="orb"></div><div class="load-msg">두 명리학자가 2027년 흐름을 펼쳐 보고 있어요.<br><small>질문을 깊게 풀어보느라 약 1분이 걸릴 수 있어요.</small></div></div>
 </section>
 
 <!-- 3: 결과 -->
@@ -574,21 +591,26 @@ async function interpret(){
     show("stepAsk");
     if(e&&e.st===429){formError("지금 2027년 흐름 보러 온 손님이 많아요! 1분만 쉬었다가 다시 눌러줘요.");return;}
     if(e&&e.st===503){formError("두 학자님이 잠깐 자리를 비우셨어요. 조금 뒤에 다시 와줘요 🌙");return;}
+    if(e&&e.why==='quality_check'){formError('답변을 한 번 더 확인해야 해서 결과를 보여드리지 못했어요. 질문 횟수는 차감되지 않았으니 잠시 뒤 다시 눌러주세요.');return;}
     const st=(e&&e.st)?" [코드 "+e.st+(e.why?"·"+e.why:"")+"]":"";
     formError("연결이 잠깐 흔들렸어요. '두 분께 2027년을 여쭤볼게요'를 한 번 더 눌러줘요."+st);
   }
 }
 
-function expertCol(title,cls,items,secs){
-  return '<div class="rd '+cls+'"><h3>'+title+'</h3>'+items.map((it,i)=>
-    '<h4>'+esc((secs&&secs[i])||SECS[i])+'</h4><p>'+esc(it.t)+(it.b?'<span class="basis">근거 · '+esc(it.b)+'</span>':'')+'</p>').join("")+'</div>';
+
+function questionDeepBlock(v){if(!v||!Array.isArray(v.steps))return '';return '<div class="qdeep"><h5>왜 이런 답인가요?</h5><p>'+esc(v.why)+'</p><h5>이런 조건이면 검토해봐요</h5><p>'+esc(v.favorable)+'</p><h5>이 조건은 먼저 확인해요</h5><p>'+esc(v.caution)+'</p><h5>준비·시도·점검 순서</h5><ol>'+v.steps.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ol></div>';}
+function expertCol(title,cls,items,secs,deep){
+ return '<div class="rd '+cls+'"><h3>'+title+'</h3>'+items.map((it,i)=>'<h4>'+esc((secs&&secs[i])||SECS[i])+'</h4><p>'+esc(it.t)+(it.b?'<span class="basis">근거 · '+esc(it.b)+'</span>':'')+'</p>'+(i===0?questionDeepBlock(deep):'')).join('')+'</div>';
 }
+function choiceBlock(d){var c=d.choice;if(!c||!Array.isArray(c.options)||c.options.length!==2)return '';return '<section class="choice27" aria-label="내 선택 비교"><h3>내 선택을 비교해 보면</h3><p class="ctitle">'+esc(c.title)+'<br>아래 조건은 사주로 확인할 수 없어, 본인 상황에 대입해 직접 확인하는 항목이에요.</p><div class="choice-options">'+c.options.map(v=>'<article class="choice-option"><h4>'+esc(v.title)+'</h4><h5>어떤 조건에서 맞을까요?</h5><p>'+esc(v.when)+'</p><h5>선택 전 확인할 것</h5><p>'+esc(v.watch)+'</p><h5>지금 해볼 일</h5><p>'+esc(v.next)+'</p><span class="basis">근거 · '+esc(v.b)+'</span></article>').join('')+'</div><p class="choice-criterion"><b>결정 기준</b><br>'+esc(c.criterion)+'</p></section>';}
+function keyMonthsBlock(d){if(!Array.isArray(d.keyMonths)||d.keyMonths.length!==3)return '';var roles={준비:'준비할 달',시도:'움직여볼 달',점검:'재점검할 달'};return '<section class="keymonths27" aria-label="기억해둘 세 달"><h3>기억해둘 세 달</h3><div class="keymonths-grid">'+d.keyMonths.map(v=>'<article class="keymonth"><span class="km-role">'+esc(roles[v.role]||v.role)+'</span><h4>'+esc(v.label)+'</h4><span class="km-date">'+esc(v.from.replace(/-/g,'.'))+' KST부터<br>'+esc(v.to.replace(/-/g,'.'))+' KST 전까지</span><p>'+esc(v.why)+'</p><p class="km-action"><b>이 달에 해볼 일</b><br>'+esc(v.action)+'</p><span class="basis">근거 · '+esc(v.basis)+'</span></article>').join('')+'</div></section>';}
 
 var flowView2027={data:null,axis:'work',month:2};
 var flowAxes2027={work:{label:'일·공부',color:'#7C2D3E'},money:{label:'돈·재물',color:'#977124'},people:{label:'사람·관계',color:'#405F66'}};
+function questionAxis2027(q){return /이직|직장|취업|공부|시험|사업|창업|일자리|진로|학업/.test(q)?'work':/돈|재물|수입|지출|연봉|매출|저축|투자/.test(q)?'money':/연애|결혼|이별|인연|친구|가족|관계|사람/.test(q)?'people':'work';}
 function flowBlock(d,c){
  var data;try{data=FLOW2027.compute(c.date,c.time||'',{jasi:c.jasi||'jeong'});}catch(e){return '';}
- flowView2027={data:data,axis:'work',month:2};
+ flowView2027={data:data,axis:questionAxis2027(c.q||''),month:2};
  return '<section class="flow27" id="flow2027" aria-label="2027년 월별 흐름">'+flowInner2027()+'</section>';
 }
 function flowInner2027(){
@@ -629,13 +651,15 @@ function renderSheet(d){
     +'<div class="ms">'+pils+'</div>'
     +(boundaryUnknown?'<div class="qline boundary-note">절기가 바뀌는 날이라 태어난 시간에 따라 '+(boundaryInfo.yearBoundaryDay?"연주와 월주":"월주")+'가 달라질 수 있어요. 시간 미상은 정오 기준으로 잠정 계산했어요.</div>':'')
     +'<div class="qline boundary-note">2027 정미년은 입춘 '+esc(span.from.slice(0,10).replace(/-/g,'.'))+'(KST '+esc(span.from.slice(11))+')부터 '+esc(span.to.slice(0,10).replace(/-/g,'.'))+' 다음 입춘 전까지예요. 양력 2027년 1월 1일~2월 3일은 사주로는 아직 2026 병오년이라, 달력의 새해와 사주의 새해가 조금 달라요.</div>'
-    +'<div class="qline"><b>2027 질문</b>'+esc(c.q.slice(0,60))+'</div>'
+    +'<div class="qline"><b>2027 질문</b>'+esc(c.q)+'</div>'
     +idiomBlock(d,c)
     +flowBlock(d,c)
-    +'<div class="rwrap">'+expertCol("직설적인 현실파","a",d.a,secs)+expertCol("신중한 정통파","b",d.bR,secs)+'</div>'
+    +'<div class="qline boundary-note">작년 비교는 해석 방향의 차이로, 실제 과거 경험을 확인한 내용은 아니에요. 시간·횟수·금액은 현실에 맞게 조정할 실행 예시예요.</div>'
+    +'<div class="rwrap">'+expertCol("직설적인 현실파","a",d.a,secs,d.consult&&d.consult.a)+expertCol("신중한 정통파","b",d.bR,secs,d.consult&&d.consult.b)+'</div>'
+    +choiceBlock(d)+keyMonthsBlock(d)
     +'<div class="syn"><h3>두 학자의 2027년 결론</h3>'
     +'<h4>공통으로 동의한 것</h4><p>'+esc(d.common)+'</p>'
-    +'<h4>해석이 갈린 부분</h4><p>'+esc(d.diff)+'</p>'
+    +'<h4>두 관점의 차이</h4><p>'+esc(d.diff)+'</p>'
     +'<h4>2027년에 실천할 행동 '+d.acts.length+'가지</h4><ol>'+d.acts.map(a=>'<li>'+esc(a)+'</li>').join("")+'</ol></div>'
     +'<div class="sfoot">재미로 보는 사주입니다. 전통적인 명리 해석을 참고용으로 정리한 것이라<br>전문가의 상담이나 조언을 대신하지 않고, 결과를 보장하지 않아요.</div>';
 }
@@ -645,7 +669,7 @@ let storyBlob=null;
 async function makeStoryImage(){
   const sheet=$("sheet");
   const cap=await html2canvas(sheet,{scale:2,backgroundColor:"#FBF6EA",logging:false});
-  const W=1080,H=1920,c=document.createElement("canvas");c.width=W;c.height=H;
+  const W=1080,H=Math.min(16000,Math.max(1920,Math.ceil(cap.height*960/cap.width+120))),c=document.createElement("canvas");c.width=W;c.height=H;
   const g=c.getContext("2d");
   const grad=g.createLinearGradient(0,0,0,H);
   grad.addColorStop(0,"#1A2348");grad.addColorStop(.6,"#0F152A");grad.addColorStop(1,"#0B1020");
