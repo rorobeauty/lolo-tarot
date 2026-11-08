@@ -204,6 +204,46 @@ function report(r){
 return {YEAR:YEAR, RULE:RULE, compute:compute, calendar:solarCalendar, report:report, fourPillars:fourPillars, sinsin:sinsin, strength:strength, relation:relation, elements:elements, isJasi:isJasi, DATA:D, CELL_COUNT:Object.keys(D.POOL).length};
 })();
 /*__Y2027_END__*/
+/*__FLOW2027_START__*/
+var FLOW2027=(function(){
+'use strict';
+var RULE='2027.flow.v1',ST='갑을병정무기경신임계',BR='자축인묘진사오미신유술해';
+var START=['2027-02-04 10:46:18','2027-03-06 04:39:33','2027-04-05 09:17:31','2027-05-06 02:25:12','2027-06-06 06:25:48','2027-07-07 16:37:03','2027-08-08 02:26:46','2027-09-08 05:28:28','2027-10-08 21:17:06','2027-11-08 00:38:35','2027-12-07 17:37:41','2028-01-06 04:54:39','2028-02-04 16:31:13'];
+var TN=['입춘','경칩','청명','입하','망종','소서','입추','백로','한로','입동','대설','소한'];
+var LABEL=['점검하기','유지하기','넓혀보기'];
+function pair(list,a,b){return list.some(function(p){return (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a);});}
+function rel(a,b){var out=[];
+ if((a+6)%12===b)out.push('충');
+ if(pair([[2,5],[5,8],[2,8],[1,10],[10,7],[1,7],[0,3],[4,4],[6,6],[9,9],[11,11]],a,b))out.push('형');
+ if(pair([[0,9],[1,4],[2,11],[3,6],[5,8],[10,7]],a,b))out.push('파');
+ if(pair([[0,7],[1,6],[2,5],[3,4],[8,11],[9,10]],a,b))out.push('해');
+ if(pair([[0,1],[2,11],[3,10],[4,9],[5,8],[6,7]],a,b))out.push('육합');
+ if(a!==b&&[[8,0,4],[11,3,7],[2,6,10],[5,9,1]].some(function(g){return g.includes(a)&&g.includes(b);}))out.push('반합');
+ return out.length?out:['없음'];
+}
+function item(level,reason){return {level:level,label:LABEL[level+1],reason:reason};}
+function compute(date,time,opts){
+ var P=LOLO2027.fourPillars(date,time||'',(opts&&opts.jasi)||'jeong'),S=LOLO2027.strength(P),strong=S.cls==='신강';
+ var rows=START.slice(0,12).map(function(start,i){
+  var s=(8+i)%10,b=(2+i)%12,sin=LOLO2027.sinsin(P.d.s,s),dr=rel(b,P.d.b),mr=rel(b,P.m.b);
+  var all=dr.concat(mr),caution=all.some(function(v){return ['충','형','파','해'].includes(v);}),harm=dr.some(function(v){return ['충','형','파','해'].includes(v);}),join=all.some(function(v){return v==='육합'||v==='반합';});
+  var work=item(0,'기존 계획을 차근차근 이어가며 준비를 쌓는 쪽으로 읽어요.');
+  if(['식신','상관','편재','정재'].includes(sin)&&strong)work=item(1,'표현·성과·실무 기회를 살펴보는 달로 요약했어요. 작게 시도하고 조건을 비교해요.');
+  else if(['편관','정관'].includes(sin))work=strong?item(1,'역할과 책임을 넓혀볼 신호로 읽어요. 맡을 범위와 일정을 먼저 확인해요.'):item(-1,'역할과 책임이 부담으로 이어지지 않도록 일정과 준비 상태를 먼저 점검해요.');
+  else if(['비견','겁재','편인','정인'].includes(sin)&&!strong)work=item(1,'배움·도움·기반을 보강하는 쪽에 힘을 써봐요. 결과를 서두르기보다 준비를 넓혀요.');
+  var money=item(0,'평소의 수입·지출 계획을 유지하며 무리 없는 범위에서 움직여요.');
+  if(['편재','정재','식신','상관'].includes(sin)&&strong)money=item(1,'수입과 결과물을 연결할 방법을 살펴봐요. 수익을 보장하는 뜻은 아니에요.');
+  else if(['비견','겁재'].includes(sin)&&strong)money=item(-1,'공동 지출·돈 약속·경쟁에 쓰는 비용을 한 번 더 확인해요.');
+  if(harm)money=item(-1,'월지와 일지 사이의 충·형·파·해 신호가 있어 계약 조건과 지출 약속부터 점검해요.');
+  var people=caution?item(-1,'일지 또는 월지와 충·형·파·해가 있어 말과 약속의 어긋남을 먼저 살펴봐요. 갈등을 예언하는 뜻은 아니에요.'):join?item(1,'일지 또는 월지와 합의 신호가 있어 대화·협업의 접점을 넓혀보는 달로 읽어요.'):item(0,'별도의 합·충 신호를 억지로 붙이지 않고 기존 관계의 리듬을 유지하는 달로 표시했어요.');
+  return {month:Number(start.slice(5,7)),year:Number(start.slice(0,4)),start:start,end:START[i+1],term:TN[i],pillar:ST[s]+BR[b],sin:sin,basis:'월간 '+sin+' · 일지 '+BR[P.d.b]+' '+dr.join('·')+' · 월지 '+BR[P.m.b]+' '+mr.join('·'),work:work,money:money,people:people};
+ });
+ return {rule:RULE,strength:S.cls,provisional:!time,months:[{month:1,year:2027,beforeSpring:true,start:'2027-01-01 00:00:00',end:START[0],label:'입춘 전'}].concat(rows.slice(0,11)),continuation:rows[11]};
+}
+return {rule:RULE,compute:compute};
+})();
+/*__FLOW2027_END__*/
+
 
 // ── 원본과 같은 명식 계산(연·월주는 절입 시각, 일주 JDN, 시주 30분 보정, 정자시/야자시) ──
 function jdn(y,m,d){const a=Math.floor((14-m)/12),yy=y+4800-a,mm=m+12*a-3;
@@ -313,6 +353,8 @@ function buildPrompt(c, P, Y, F){
 `- ${F.sewoon}`,
 `- ${F.prev}`,
 F.idiom ? `- 확정 사자성어(바꾸거나 다른 성어 제시 금지): ${F.idiom}` : "",
+F.flow ? "- 화면의 월별 그래프는 운세 점수·확률이 아니라 고정 규칙의 행동 방향 요약입니다. 아래 그래프 분류와 실제 결과를 혼동하거나 그래프가 성패를 보장한다고 쓰지 마세요." : "",
+F.flow ? F.flow.months.concat([F.flow.continuation]).filter(r=>!r.beforeSpring).map(r=>`${r.year}년 ${r.month}월 그래프: 일·공부 ${r.work.label}, 돈·재물 ${r.money.label}, 관계 ${r.people.label}`).join("\n") : "",
 "- 2027 월 흐름표(절기 기준 시작일 · 월주 · 월간이 일간에게 되는 십신 · 월지와 일지/월지 관계 · 월지와 세운 미(未) 관계):",
 ...F.months.map(r=>`  · ${r.label} ${r.pillar} · ${r.sin} · ${r.rel} · 미(未)와 ${r.vsYear}`),
 `의뢰인이 직접 적은 2027년 질문: ${c.q}`,
@@ -384,6 +426,7 @@ function finalizeOut(data, P, c, Y, F){
   out.year = Y27_YEAR;
   out.span = { from: Y27_TERMS[2027][1], to: Y27_TERMS[2028][1] };   // 입춘 기준 정미년 범위(KST)
   if (Y) out.y2027 = Y;
+  if (F && F.flow) out.flow2027 = F.flow;
   if (F) out.facts = { sewoon: F.sewoon, prev: F.prev, months: F.months.map(r => ({ label: r.label, pillar: r.pillar, sin: r.sin })) };
   return out;
 }
@@ -404,6 +447,7 @@ export default async function handler(req, res){
   try { Y = LOLO2027.compute(c.date, c.time, { jasi: c.jasi }); } catch (e) { console.error("y2027_fail", String(e).slice(0, 120)); }
   const F = y27Facts(P, Y);
 
+  F.flow = FLOW2027.compute(c.date, c.time, {jasi:c.jasi});
   const PROMPT = buildPrompt(c, P, Y, F);
   const MAXTOK = 4500;                                        // 원본 3000 → 항목 7개(약 1.5배 분량)에 맞춤
   const t0 = Date.now();
