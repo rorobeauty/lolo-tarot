@@ -400,17 +400,35 @@ function consultSchema(E){
 }
 function consultAllText(o){if(typeof o==='string')return o;if(Array.isArray(o))return o.map(consultAllText).join(' ');if(o&&typeof o==='object')return Object.keys(o).filter(k=>k!=='refs'&&k!=='id'&&k!=='role').map(k=>consultAllText(o[k])).join(' ');return '';}
 
+
 function consultUnsafe(t){
- // 준비·서류 확인 같은 절차 권고와 미래 보장·큰 결정 명령을 구분합니다.
- if(/(퇴사|이직|결혼|이별|투자)(?:를|은|는|부터|만)?\s*(?:하세요|하십시오|하지\s*마세요|해야\s*(?:해요|합니다))/.test(t)
-  ||/(퇴사|이직|결혼|이별|투자).{0,12}(절대|반드시|무조건).{0,10}(하지|하세요|해야|않|안\s*돼)/.test(t)
-  ||/(사주|명식)(?:가|에|이).{0,20}(고민|질문|속마음).{0,12}(맞혔|알아냈|보여요)/.test(t))return true;
- const normalized=t.replace(/(절대|무조건|반드시|100\s*%)([^.!?\n]{0,32})/g,(full,marker,tail)=>{
-  if(/(보장|단정|확정|확신).{0,12}(없|않|아니|어렵|못)|(?:라는|다는)\s*뜻.{0,6}아니/.test(tail))return tail;
-  const check=tail.search(/확인|점검|검토|비교|기록|문서화|정리|준비/),outcome=tail.search(/합격|승진|성공|수익|결혼|이별|퇴사|투자|임신|건강|됩니다|될|돼|이직/);
-  return check>=0&&(outcome<0||check<outcome)?tail:full;
+ const sentences=t.split(/[.!?\n]+/);
+ return sentences.some(v=>{
+  if(/(퇴사|이직|결혼|이별|투자)(?:를|은|는|부터|만)?\s*(?:하세요|하십시오|하지\s*마세요|해야\s*(?:해요|합니다))/.test(v)
+   ||/(퇴사|이직|결혼|이별|투자).{0,12}(절대|반드시|무조건).{0,10}(하지|하세요|해야|않|안\s*돼)/.test(v)
+   ||/(사주|명식)(?:가|에|이).{0,20}(고민|질문|속마음).{0,12}(맞혔|알아냈|보여요)/.test(v))return true;
+  if(/(?:보장|확정|단정|확신).{0,14}(?:없|않|아니|어렵|못)|(?:라는|다는)\s*뜻.{0,6}아니/.test(v))return false;
+  return /(?:반드시|무조건|절대|확실히|100\s*%).{0,14}(?:성공|합격|승진|대박|잘\s*되|좋아|유리|불리|실패|망하|안\s*돼)/.test(v)
+   ||/(?:반드시|무조건|확실히|100\s*%).{0,24}(?:결혼|이직|수익|매출|임신|건강|돈).{0,10}(?:됩니다|돼요|될|늘어|오르|들어와|보장)/.test(v);
  });
- return /절대|무조건|반드시|100\s*%/.test(normalized)||/(꼭|확실히).{0,18}(합격|승진|성공|결혼|대박|수익)/.test(normalized);
+}
+function consultFactConflict(t,E){
+ let st,el;try{st=JSON.parse(E.STRENGTH.text);el=JSON.parse(E.ELEMENTS.text);}catch(e){return true;}
+ if(st.cls==='신강'&&/신약(?:이라|으로|한|인\s*편|에\s*해당)/.test(t))return true;
+ if(st.cls==='신약'&&/신강(?:이라|으로|한|인\s*편|에\s*해당)/.test(t))return true;
+ for(const m of t.matchAll(/(?<![가-힣])(목|화|토|금|수)(?:\([^)]{1,4}\)|\s*기운|\s*요소)(?:이|가|은|는)?\s*(?:전혀\s*)?없/g))if(el.counts[m[1]]>0)return true;
+ if(!el.missing.length&&/오행.{0,12}(?:없|부족)/.test(t))return true;
+ return false;
+}
+function explainConsultTerms(o,key){
+ if(key==='refs'||key==='id'||key==='role')return o;
+ if(typeof o==='string'){
+  const gloss={'신강':'스스로 버티는 힘이 비교적 있는 분류','신약':'도움과 준비 기반을 먼저 보는 분류','편재':'새 제안과 자원 활용의 방향','정재':'정해진 대가와 꾸준한 관리의 방향','편관':'과제와 책임을 점검하는 방향','정관':'절차와 신뢰를 살피는 방향','식신':'반복해 성과를 쌓는 방향','겁재':'경쟁과 역할 분담을 살피는 방향','비견':'자기 방식과 협업을 살피는 방향','반합':'관계의 접점을 연결하는 신호','육합':'서로 연결되는 지점을 살피는 신호'};
+  for(const term of Object.keys(gloss))o=o.replace(new RegExp('(?<![가-힣])'+term+'(?=(?:이|가|은|는|을|를|의|와|과|로|이라|라|에|도|때문|[\\s.,·])|$)','g'),term+'('+gloss[term]+')');
+  return o;
+ }
+ if(Array.isArray(o))return o.map(v=>explainConsultTerms(v,key));
+ if(o&&typeof o==='object'){const out={};for(const k of Object.keys(o))out[k]=explainConsultTerms(o[k],k);return out;}return o;
 }
 
 function consultValid(data,E,c){
@@ -430,7 +448,7 @@ function consultValid(data,E,c){
  const selected=new Set(km.map(v=>v.id));for(const k of ['a','bR'])if(data[k][6].refs.some(id=>!selected.has(id)))return bad('important_section_month_refs');
  if(!text(data.common,65,400)||!text(data.diff,65,450)||!Array.isArray(data.acts)||data.acts.length!==4||!data.acts.every(s=>text(s,20,180)))return bad('summary_schema');
  const all=consultAllText(data);if(all.length<2600||all.length>8500)return bad('total_length');if(consultUnsafe(all))return bad('absolute_or_major_decision');
- if(/신강|신약|편재|정재|편관|정관|식신|겁재|비견|천간|오행|12운성|십신|반합|육합|정계충/.test(all))return bad('technical_term_in_body');
+ if(consultFactConflict(all,E))return bad('computed_fact_conflict');
  if(/의직|퇴샤|승찐|게약|계악/.test(all))return bad('core_word_typo');
  // 날짜는 서버가 표시합니다. AI 본문에 특정 날짜·잘못된 해의 1월을 쓰지 못하게 합니다.
  if(/\d{1,2}\s*월\s*\d{1,2}\s*일|\d{1,2}\s*\/\s*\d{1,2}/.test(all))return bad('model_wrote_date');
@@ -531,6 +549,7 @@ function validateBody(b){
 
 function finalizeOut(data,P,c,Y,F){
  const E=consultEvidence(Y,F,c);data=attachConsultMonths(data,E,c);const v=consultValid(data,E,c);if(!v.ok){finalizeOut.lastError=v.code;return null;}
+ data=explainConsultTerms(data);
  const b=ids=>ids.map(id=>E[id].label).join(' · ');
  const out={a:data.a.map(it=>({t:it.t.trim(),refs:it.refs,b:b(it.refs)})),bR:data.bR.map(it=>({t:it.t.trim(),refs:it.refs,b:b(it.refs)})),consult:data.consult,choice:{title:data.choice.title,options:data.choice.options.map(o=>({...o,b:b(o.refs)})),criterion:data.choice.criterion},keyMonths:data.keyMonths.map(it=>{const row=E[it.id].row;return {...it,label:(row.year===2028?'2028년 ':'')+row.month+'월',from:row.start,to:row.end,pillar:row.pillar,basis:E[it.id].label+' · '+row.basis};}),common:data.common,diff:data.diff,acts:data.acts,reportRule:CONSULT_RULE,bodyCharacters:v.chars};
  out.ms={pils:msPils(P)};out.secs=SECS2027;out.year=Y27_YEAR;out.span={from:Y27_TERMS[2027][1],to:Y27_TERMS[2028][1]};if(Y)out.y2027=Y;if(F.flow)out.flow2027=F.flow;out.facts={sewoon:F.sewoon,prev:F.prev,months:F.months.map(r=>({label:r.label,pillar:r.pillar,sin:r.sin}))};finalizeOut.lastError='';return out;
