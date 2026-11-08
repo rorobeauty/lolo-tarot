@@ -667,7 +667,7 @@ let storyBlob=null;
 async function makeStoryImage(){
   const sheet=$("sheet");
   const cap=await html2canvas(sheet,{scale:2,backgroundColor:"#FBF6EA",logging:false});
-  const W=1080,H=1920,c=document.createElement("canvas");c.width=W;c.height=H;
+  const W=1080,H=Math.min(16000,Math.max(1920,Math.ceil(cap.height*960/cap.width+120))),c=document.createElement("canvas");c.width=W;c.height=H;
   const g=c.getContext("2d");
   const grad=g.createLinearGradient(0,0,0,H);
   grad.addColorStop(0,"#1A2348");grad.addColorStop(.6,"#0F152A");grad.addColorStop(1,"#0B1020");
