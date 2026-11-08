@@ -121,6 +121,29 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 .jasi .jt{font-size:.8rem;color:#EAD9A6;margin-bottom:6px}
 .jasi .jh{font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.5}
 .jasi .cats{margin-top:0}
+
+/* 2027 월별 흐름: 기존 결과지 안의 보조 그래프 */
+.flow27{margin:14px 0;padding:16px 12px;background:#fff;border:1px solid var(--s-line);border-radius:10px;color:var(--s-ink)}
+.flow27 h3{font-family:'Apple Myungjo',Batang,serif;font-size:1rem;color:var(--burg);margin:0 0 6px}
+.flow27 .fl-intro,.flow27 .fl-note{font-size:.72rem;line-height:1.65;color:#756b59;margin:5px 0 10px}
+.flow27 .fl-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.flow27 button{font:inherit;cursor:pointer;box-shadow:none;letter-spacing:0}
+.flow27 .fl-tab{padding:8px 12px;border:1px solid var(--s-line);border-radius:999px;background:#fff;color:#5e5547;font-size:.76rem;min-height:36px}
+.flow27 .fl-tab[aria-pressed=true]{background:#F3EDE0;border-color:var(--gold);font-weight:700;color:var(--burg)}
+.flow27 svg{display:block;width:100%;height:auto;max-height:215px;overflow:visible}
+.flow27 .fl-months{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin:8px 0 12px}
+.flow27 .fl-month{min-width:0;padding:7px 0;border:1px solid transparent;border-radius:6px;background:transparent;font-size:.68rem;color:#756b59;min-height:32px}
+.flow27 .fl-month[aria-pressed=true]{border-color:var(--gold);background:#F3EDE0;color:var(--burg);font-weight:700}
+.flow27 .fl-month.fl-next{grid-column:1/-1;text-align:left;padding-left:10px;border-color:var(--s-line)}
+.flow27 button:focus-visible,.flow27 summary:focus-visible{outline:2px solid var(--burg);outline-offset:2px}
+.flow27 .fl-detail{background:#F7F3E9;border-radius:8px;padding:12px;min-height:112px;font-size:.76rem;line-height:1.7}
+.flow27 .fl-detail h4{font-size:.8rem;margin:0 0 4px;color:var(--burg)}
+.flow27 .fl-detail .fl-basis{font-size:.65rem;color:#867a65;display:block;margin-top:5px}
+.flow27 details{border-top:1px solid var(--s-line);margin-top:12px;padding-top:10px;font-size:.67rem;line-height:1.7;color:#867a65}
+.flow27 summary{cursor:pointer;color:#756b59}
+.flow27 details p{margin:8px 0}.flow27 .fl-note{font-size:.64rem;margin:10px 0 0}
+@media(max-width:420px){.flow27{padding:14px 10px}.flow27 .fl-months{grid-template-columns:repeat(6,minmax(0,1fr))}.flow27 .fl-month{font-size:.72rem}}
+
 </style>
 </head>
 <body>
@@ -393,6 +416,46 @@ function report(r){
 return {YEAR:YEAR, RULE:RULE, compute:compute, calendar:solarCalendar, report:report, fourPillars:fourPillars, sinsin:sinsin, strength:strength, relation:relation, elements:elements, isJasi:isJasi, DATA:D, CELL_COUNT:Object.keys(D.POOL).length};
 })();
 /*__Y2027_END__*/
+/*__FLOW2027_START__*/
+var FLOW2027=(function(){
+'use strict';
+var RULE='2027.flow.v1',ST='갑을병정무기경신임계',BR='자축인묘진사오미신유술해';
+var START=['2027-02-04 10:46:18','2027-03-06 04:39:33','2027-04-05 09:17:31','2027-05-06 02:25:12','2027-06-06 06:25:48','2027-07-07 16:37:03','2027-08-08 02:26:46','2027-09-08 05:28:28','2027-10-08 21:17:06','2027-11-08 00:38:35','2027-12-07 17:37:41','2028-01-06 04:54:39','2028-02-04 16:31:13'];
+var TN=['입춘','경칩','청명','입하','망종','소서','입추','백로','한로','입동','대설','소한'];
+var LABEL=['점검하기','유지하기','넓혀보기'];
+function pair(list,a,b){return list.some(function(p){return (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a);});}
+function rel(a,b){var out=[];
+ if((a+6)%12===b)out.push('충');
+ if(pair([[2,5],[5,8],[2,8],[1,10],[10,7],[1,7],[0,3],[4,4],[6,6],[9,9],[11,11]],a,b))out.push('형');
+ if(pair([[0,9],[1,4],[2,11],[3,6],[5,8],[10,7]],a,b))out.push('파');
+ if(pair([[0,7],[1,6],[2,5],[3,4],[8,11],[9,10]],a,b))out.push('해');
+ if(pair([[0,1],[2,11],[3,10],[4,9],[5,8],[6,7]],a,b))out.push('육합');
+ if(a!==b&&[[8,0,4],[11,3,7],[2,6,10],[5,9,1]].some(function(g){return g.includes(a)&&g.includes(b);}))out.push('반합');
+ return out.length?out:['없음'];
+}
+function item(level,reason){return {level:level,label:LABEL[level+1],reason:reason};}
+function compute(date,time,opts){
+ var P=LOLO2027.fourPillars(date,time||'',(opts&&opts.jasi)||'jeong'),S=LOLO2027.strength(P),strong=S.cls==='신강';
+ var rows=START.slice(0,12).map(function(start,i){
+  var s=(8+i)%10,b=(2+i)%12,sin=LOLO2027.sinsin(P.d.s,s),dr=rel(b,P.d.b),mr=rel(b,P.m.b);
+  var all=dr.concat(mr),caution=all.some(function(v){return ['충','형','파','해'].includes(v);}),harm=dr.some(function(v){return ['충','형','파','해'].includes(v);}),join=all.some(function(v){return v==='육합'||v==='반합';});
+  var work=item(0,'기존 계획을 차근차근 이어가며 준비를 쌓는 쪽으로 읽어요.');
+  if(['식신','상관','편재','정재'].includes(sin)&&strong)work=item(1,'표현·성과·실무 기회를 살펴보는 달로 요약했어요. 작게 시도하고 조건을 비교해요.');
+  else if(['편관','정관'].includes(sin))work=strong?item(1,'역할과 책임을 넓혀볼 신호로 읽어요. 맡을 범위와 일정을 먼저 확인해요.'):item(-1,'역할과 책임이 부담으로 이어지지 않도록 일정과 준비 상태를 먼저 점검해요.');
+  else if(['비견','겁재','편인','정인'].includes(sin)&&!strong)work=item(1,'배움·도움·기반을 보강하는 쪽에 힘을 써봐요. 결과를 서두르기보다 준비를 넓혀요.');
+  var money=item(0,'평소의 수입·지출 계획을 유지하며 무리 없는 범위에서 움직여요.');
+  if(['편재','정재','식신','상관'].includes(sin)&&strong)money=item(1,'수입과 결과물을 연결할 방법을 살펴봐요. 수익을 보장하는 뜻은 아니에요.');
+  else if(['비견','겁재'].includes(sin)&&strong)money=item(-1,'공동 지출·돈 약속·경쟁에 쓰는 비용을 한 번 더 확인해요.');
+  if(harm)money=item(-1,'월지와 일지 사이의 충·형·파·해 신호가 있어 계약 조건과 지출 약속부터 점검해요.');
+  var people=caution?item(-1,'일지 또는 월지와 충·형·파·해가 있어 말과 약속의 어긋남을 먼저 살펴봐요. 갈등을 예언하는 뜻은 아니에요.'):join?item(1,'일지 또는 월지와 합의 신호가 있어 대화·협업의 접점을 넓혀보는 달로 읽어요.'):item(0,'별도의 합·충 신호를 억지로 붙이지 않고 기존 관계의 리듬을 유지하는 달로 표시했어요.');
+  return {month:Number(start.slice(5,7)),year:Number(start.slice(0,4)),start:start,end:START[i+1],term:TN[i],pillar:ST[s]+BR[b],sin:sin,basis:'월간 '+sin+' · 일지 '+BR[P.d.b]+' '+dr.join('·')+' · 월지 '+BR[P.m.b]+' '+mr.join('·'),work:work,money:money,people:people};
+ });
+ return {rule:RULE,strength:S.cls,provisional:!time,months:[{month:1,year:2027,beforeSpring:true,start:'2027-01-01 00:00:00',end:START[0],label:'입춘 전'}].concat(rows.slice(0,11)),continuation:rows[11]};
+}
+return {rule:RULE,compute:compute};
+})();
+/*__FLOW2027_END__*/
+
 function idiomBlock(d,c){
   let r=null;try{r=LOLO2027.compute(c.date,c.time||"",{jasi:c.jasi});}catch(e){return "";}
   const ju=r.pillars.d.slice(0,2);
@@ -520,6 +583,39 @@ function expertCol(title,cls,items,secs){
   return '<div class="rd '+cls+'"><h3>'+title+'</h3>'+items.map((it,i)=>
     '<h4>'+esc((secs&&secs[i])||SECS[i])+'</h4><p>'+esc(it.t)+(it.b?'<span class="basis">근거 · '+esc(it.b)+'</span>':'')+'</p>').join("")+'</div>';
 }
+
+var flowView2027={data:null,axis:'work',month:2};
+var flowAxes2027={work:{label:'일·공부',color:'#7C2D3E'},money:{label:'돈·재물',color:'#977124'},people:{label:'사람·관계',color:'#405F66'}};
+function flowBlock(d,c){
+ var data;try{data=FLOW2027.compute(c.date,c.time||'',{jasi:c.jasi||'jeong'});}catch(e){return '';}
+ flowView2027={data:data,axis:'work',month:2};
+ return '<section class="flow27" id="flow2027" aria-label="2027년 월별 흐름">'+flowInner2027()+'</section>';
+}
+function flowInner2027(){
+ var v=flowView2027,f=v.data,ax=flowAxes2027[v.axis],rows=f.months.concat([f.continuation]),row=rows[v.month-1],color=ax.color;
+ var x=function(m){return 78+(m-1)*26;},y=function(level){return 100-level*54;};
+ var points=rows.map(function(r,i){return r.beforeSpring?null:x(i+1)+','+y(r[v.axis].level);}).filter(Boolean).join(' ');
+ var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 190" role="img" aria-label="'+ax.label+'의 2027년 2월부터 2028년 1월까지 상대 흐름. 점수가 아닌 넓혀보기, 유지하기, 점검하기 세 단계로 표시해요."><title>2027년 '+ax.label+' 월별 흐름</title><rect x="65" y="26" width="27" height="134" rx="5" fill="#F0EDE6"/>';
+ [[1,'넓혀보기'],[0,'유지하기'],[-1,'점검하기']].forEach(function(t){svg+='<line x1="68" y1="'+y(t[0])+'" x2="403" y2="'+y(t[0])+'" stroke="#E4DCCD" stroke-dasharray="3 5"/><text x="0" y="'+(y(t[0])+4)+'" font-size="12" fill="#756b59">'+t[1]+'</text>';});
+ svg+='<text x="78" y="94" text-anchor="middle" font-size="10" fill="#938a78">입춘</text><text x="78" y="108" text-anchor="middle" font-size="10" fill="#938a78">전</text><polyline points="'+points+'" fill="none" stroke="'+color+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
+ rows.forEach(function(r,i){var slot=i+1;if(!r.beforeSpring)svg+='<circle cx="'+x(slot)+'" cy="'+y(r[v.axis].level)+'" r="'+(slot===v.month?'5':'3.5')+'" fill="'+(slot===v.month?color:'#fff')+'" stroke="'+color+'" stroke-width="2"><title>'+(r.year===2028?'2028년 ':'')+r.month+'월 · '+r[v.axis].label+'</title></circle>';svg+='<text x="'+x(slot)+'" y="182" text-anchor="middle" font-size="12" fill="#756b59">'+(r.year===2028?'28.1':r.month)+'</text>';});svg+='</svg>';
+ var detail=row.beforeSpring?'<h4>1월 · 입춘 전</h4><p>양력 1월부터 2월 4일 입춘 전까지는 아직 병오년이에요. 정미년 그래프에 점수를 끼워 넣지 않고 비워두었어요.</p>':'<h4>'+(row.year===2028?'2028년 ':'')+row.month+'월 · '+esc(row.pillar)+'월 · '+esc(row[v.axis].label)+'</h4><p>'+esc(row[v.axis].reason)+'</p><span class="fl-basis">'+esc(row.term)+' '+esc(row.start.replace(/-/g,'.'))+' KST부터 '+esc(row.end.replace(/-/g,'.'))+' KST 전까지<br>근거 · '+esc(row.basis)+'</span>';
+ return '<h3>2027년 월별 흐름</h3><p class="fl-intro">어느 달에 힘을 넓히고, 무엇을 점검하면 좋을지 살펴봐요. 분야와 달을 누르면 근거를 볼 수 있어요.</p>'
+ +'<div class="fl-tabs" role="group" aria-label="그래프 분야">'+Object.keys(flowAxes2027).map(function(k){return '<button type="button" class="fl-tab" data-flow-axis="'+k+'" aria-pressed="'+(v.axis===k)+'">'+flowAxes2027[k].label+'</button>';}).join('')+'</div>'+svg
+ +'<div class="fl-months" role="group" aria-label="자세히 볼 달">'+rows.map(function(r,i){var slot=i+1;return '<button type="button" class="fl-month'+(r.year===2028?' fl-next':'')+'" data-flow-month="'+slot+'" aria-label="'+(r.year===2028?'2028년 ':'')+r.month+'월 자세히 보기" aria-pressed="'+(v.month===slot)+'">'+(r.year===2028?'2028년 1월 · 정미년 이어보기':r.month+'월')+'</button>';}).join('')+'</div>'
+ +'<div class="fl-detail" aria-live="polite">'+detail+'</div>'
+ +'<p class="fl-note">2027년 1월은 회색으로 비웠고, 2월은 2월 4일 입춘부터 표시했어요. 마지막 28.1은 2028년 1월 소한부터 다음 입춘 전까지 이어지는 정미년의 마지막 달이에요.'+(f.provisional?' 출생시간 미상은 정오 기준 잠정 흐름이에요.':'')+'</p>'
+ +'<details><summary>그래프 계산 기준과 한계</summary><p>운세 점수나 성공 확률이 아니에요. 기존 명식·신강/신약 분류와 월간 십신, 월지와 일지·월지의 합충 관계를 서비스의 고정 규칙으로 세 단계에 요약했어요. AI가 선의 높낮이를 정하지 않아 같은 출생 입력은 같은 그래프로 나와요.</p><p>일·공부: 신강의 식상·재성·관성 달과 신약의 비겁·인성 달은 활동·준비를 넓히는 쪽, 신약의 관성 달은 책임 점검 쪽으로 표시해요. 돈·재물: 신강의 재성·식상 달은 기회 탐색, 신강의 비겁 달과 일지에 충·형·파·해가 있는 달은 돈 약속 점검 쪽으로 표시해요. 사람·관계: 일지·월지에 충·형·파·해가 있으면 점검, 그런 신호 없이 합이 있으면 대화의 접점 확대, 나머지는 유지로 표시해요. 복합 신호는 점검을 우선해요.</p><p>신강·신약은 기존 성어 모듈의 보조 분류이며 대운·격국·용신 전체를 반영한 정밀 평가가 아니에요. 점검은 나쁜 일이 생긴다는 뜻이 아니고, 넓혀보기 역시 좋은 결과를 보장하지 않아요. 그래프는 분류 요약이고 두 해석자의 본문은 같은 달도 다른 관점으로 풀 수 있어요. 규칙 '+esc(f.rule)+'</p></details>';
+}
+$('sheet').addEventListener('click',function(e){
+ var target=e.target.closest('[data-flow-axis],[data-flow-month]');if(!target||!flowView2027.data)return;
+ if(target.dataset.flowAxis&&flowAxes2027[target.dataset.flowAxis])flowView2027.axis=target.dataset.flowAxis;
+ if(target.dataset.flowMonth)flowView2027.month=Number(target.dataset.flowMonth);
+ var key=target.dataset.flowAxis?'data-flow-axis':'data-flow-month',val=target.getAttribute(key);
+ $('flow2027').innerHTML=flowInner2027();
+ var next=$('flow2027').querySelector('['+key+'="'+val+'"]');if(next)next.focus({preventScroll:true});
+});
+
 function renderSheet(d){
   const c=lastCtx;
   const secs=(Array.isArray(d.secs)&&d.secs.length===7&&d.secs.every(x=>typeof x==="string"))?d.secs:SECS;
@@ -535,6 +631,7 @@ function renderSheet(d){
     +'<div class="qline boundary-note">2027 정미년은 입춘 '+esc(span.from.slice(0,10).replace(/-/g,'.'))+'(KST '+esc(span.from.slice(11))+')부터 '+esc(span.to.slice(0,10).replace(/-/g,'.'))+' 다음 입춘 전까지예요. 양력 2027년 1월 1일~2월 3일은 사주로는 아직 2026 병오년이라, 달력의 새해와 사주의 새해가 조금 달라요.</div>'
     +'<div class="qline"><b>2027 질문</b>'+esc(c.q.slice(0,60))+'</div>'
     +idiomBlock(d,c)
+    +flowBlock(d,c)
     +'<div class="rwrap">'+expertCol("직설적인 현실파","a",d.a,secs)+expertCol("신중한 정통파","b",d.bR,secs)+'</div>'
     +'<div class="syn"><h3>두 학자의 2027년 결론</h3>'
     +'<h4>공통으로 동의한 것</h4><p>'+esc(d.common)+'</p>'
