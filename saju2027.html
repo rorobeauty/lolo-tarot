@@ -161,6 +161,14 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 .keymonth .km-date{display:block;font-size:.61rem;line-height:1.6;color:#8a8272;margin:5px 0 9px}
 @media(max-width:520px){.choice-options,.keymonths-grid{grid-template-columns:1fr}.keymonth{padding:13px 12px}}
 
+
+/* 읽기는 간결하게, 계산 근거는 필요할 때 펼쳐봐요. */
+.reading-details{margin:12px 0 0;border-top:1px solid var(--s-line);padding-top:9px;text-align:left;font-size:.72rem;line-height:1.75;color:#756b59}
+.reading-details:not([open]) > :not(summary){display:none}
+.reading-details summary{cursor:pointer;min-height:30px;line-height:30px;color:#756b59;list-style-position:inside}
+.reading-details summary:focus-visible{outline:2px solid var(--burg);outline-offset:3px}
+.reading-detail-body{padding:3px 0 6px}.reading-detail-body p{margin:6px 0}.reading-detail-body h5{margin:9px 0 3px;font-size:.72rem}
+.rd .reading-details{margin-top:16px}.rd .reading-details p{font-size:.7rem}.idiom27 .reading-details{font-size:.7rem}.human-period{color:#867a65;font-size:.72rem;margin-bottom:5px}
 </style>
 </head>
 <body>
@@ -473,10 +481,19 @@ return {rule:RULE,compute:compute};
 })();
 /*__FLOW2027_END__*/
 
+
+function detailBlock2027(label,body){return body?'<details class="reading-details"><summary>'+esc(label)+'</summary><div class="reading-detail-body">'+body+'</div></details>':'';}
+function naturalDate2027(v,year){var p=String(v||'').slice(0,10).split('-').map(Number);if(p.length!==3||!p[0]||!p[1]||!p[2])return '';return (year?p[0]+'년 ':'')+p[1]+'월 '+p[2]+'일';}
+function naturalClock2027(v){var p=String(v||'').split(':').map(Number);if(p.length<2||!Number.isFinite(p[0]))return '';return (p[0]<12?'오전 ':'오후 ')+(p[0]%12||12)+'시'+(p[1]?' '+p[1]+'분':'');}
+function naturalDateTime2027(v){var p=String(v||'').split(' ');return naturalDate2027(p[0],true)+(p[1]?' '+naturalClock2027(p[1]):'');}
+function naturalPeriod2027(from,to){function part(v,showYear){var p=String(v).slice(0,10).split('-').map(Number),prefix=showYear?(p[0]===2028?'다음 해 ':p[0]+'년 '):'';return prefix+p[1]+'월 '+(p[2]<=10?'초':p[2]<=20?'중순':'말');}var a=String(from).slice(0,4),b=String(to).slice(0,4);return part(from,a!=='2027')+'~'+part(to,a!==b);}
+function periodDetail2027(from,to,basis){return '<p>'+esc(naturalDateTime2027(from))+'부터<br>'+esc(naturalDateTime2027(to))+' 전까지예요.</p><p>한국 시간을 기준으로 보며, 시각은 분 단위로 줄여 표시했어요.</p>'+(basis?'<p>'+esc(basis)+'</p>':'');}
+function naturalMonthWhy2027(text){return String(text||'').replace(/^(?:2028년\s*)?\d{1,2}월\.\s*/,'').split('질문 분야의 그래프 방향:')[0].trim();}
+
 function idiomBlock(d,c){
   let r=null;try{r=LOLO2027.compute(c.date,c.time||"",{jasi:c.jasi});}catch(e){return "";}
   const ju=r.pillars.d.slice(0,2);
-  return '<div class="idiom27"><div class="il">2027 정미년 · 나의 사자성어 · 일주 '+esc(ju)+'</div><div class="iw"><b>'+esc(r.idiom)+'</b><span>'+esc(r.hanja)+'</span></div><div class="im">'+esc(r.meaning)+'</div><div class="ib">근거 · '+esc(r.why.join(" "))+'</div></div>';
+  return '<div class="idiom27"><div class="il">2027년 나의 사자성어</div><div class="iw"><b>'+esc(r.idiom)+'</b><span>'+esc(r.hanja)+'</span></div><div class="im">'+esc(r.meaning)+'</div>'+detailBlock2027('이 사자성어가 나온 이유','<p>'+esc(r.why.join(" "))+'</p>')+'</div>';
 }
 
 let cal="solar", sex="f", lastCtx=null;
@@ -602,10 +619,11 @@ async function interpret(){
 
 function questionDeepBlock(v){if(!v||!Array.isArray(v.steps))return '';return '<div class="qdeep"><h5>왜 이런 답인가요?</h5><p>'+esc(v.why)+'</p><h5>이런 조건이면 검토해봐요</h5><p>'+esc(v.favorable)+'</p><h5>이 조건은 먼저 확인해요</h5><p>'+esc(v.caution)+'</p><h5>준비·시도·점검 순서</h5><ol>'+v.steps.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ol></div>';}
 function expertCol(title,cls,items,secs,deep){
- return '<div class="rd '+cls+'"><h3>'+title+'</h3>'+items.map((it,i)=>'<h4>'+esc((secs&&secs[i])||SECS[i])+'</h4><p>'+esc(it.t)+(it.b?'<span class="basis">근거 · '+esc(it.b)+'</span>':'')+'</p>'+(i===0?questionDeepBlock(deep):'')).join('')+'</div>';
+ var notes=items.map(function(it,i){return it.b?'<h5>'+esc((secs&&secs[i])||SECS[i])+'</h5><p>'+esc(it.b)+'</p>':'';}).join('');
+ return '<div class="rd '+cls+'"><h3>'+title+'</h3>'+items.map((it,i)=>'<h4>'+esc((secs&&secs[i])||SECS[i])+'</h4><p>'+esc(it.t)+'</p>'+(i===0?questionDeepBlock(deep):'')).join('')+detailBlock2027('풀이에 참고한 내용',notes)+'</div>';
 }
-function choiceBlock(d){var c=d.choice;if(!c||!Array.isArray(c.options)||c.options.length!==2)return '';return '<section class="choice27" aria-label="내 선택 비교"><h3>내 선택을 비교해 보면</h3><p class="ctitle">'+esc(c.title)+'<br>아래 조건은 사주로 확인할 수 없어, 본인 상황에 대입해 직접 확인하는 항목이에요.</p><div class="choice-options">'+c.options.map(v=>'<article class="choice-option"><h4>'+esc(v.title)+'</h4><h5>어떤 조건에서 맞을까요?</h5><p>'+esc(v.when)+'</p><h5>선택 전 확인할 것</h5><p>'+esc(v.watch)+'</p><h5>지금 해볼 일</h5><p>'+esc(v.next)+'</p><span class="basis">근거 · '+esc(v.b)+'</span></article>').join('')+'</div><p class="choice-criterion"><b>결정 기준</b><br>'+esc(c.criterion)+'</p></section>';}
-function keyMonthsBlock(d){if(!Array.isArray(d.keyMonths)||d.keyMonths.length!==3)return '';var roles={준비:'준비할 달',시도:'움직여볼 달',점검:'재점검할 달'};return '<section class="keymonths27" aria-label="기억해둘 세 달"><h3>기억해둘 세 달</h3><div class="keymonths-grid">'+d.keyMonths.map(v=>'<article class="keymonth"><span class="km-role">'+esc(roles[v.role]||v.role)+'</span><h4>'+esc(v.label)+'</h4><span class="km-date">'+esc(v.from.replace(/-/g,'.'))+' KST부터<br>'+esc(v.to.replace(/-/g,'.'))+' KST 전까지</span><p>'+esc(v.why)+'</p><p class="km-action"><b>이 달에 해볼 일</b><br>'+esc(v.action)+'</p><span class="basis">근거 · '+esc(v.basis)+'</span></article>').join('')+'</div></section>';}
+function choiceBlock(d){var c=d.choice;if(!c||!Array.isArray(c.options)||c.options.length!==2)return '';return '<section class="choice27" aria-label="내 선택 비교"><h3>내 선택을 비교해 보면</h3><p class="ctitle">'+esc(c.title)+'<br>아래 조건은 사주로 확인할 수 없어, 본인 상황에 대입해 직접 확인하는 항목이에요.</p><div class="choice-options">'+c.options.map(v=>'<article class="choice-option"><h4>'+esc(v.title)+'</h4><h5>어떤 조건에서 맞을까요?</h5><p>'+esc(v.when)+'</p><h5>선택 전 확인할 것</h5><p>'+esc(v.watch)+'</p><h5>지금 해볼 일</h5><p>'+esc(v.next)+'</p>'+detailBlock2027('해석 근거 보기','<p>'+esc(v.b||'')+'</p>')+'</article>').join('')+'</div><p class="choice-criterion"><b>결정 기준</b><br>'+esc(c.criterion)+'</p></section>';}
+function keyMonthsBlock(d){if(!Array.isArray(d.keyMonths)||d.keyMonths.length!==3)return '';var roles={준비:'준비할 달',시도:'움직여볼 달',점검:'돌아볼 달'};return '<section class="keymonths27" aria-label="기억해둘 세 달"><h3>기억해둘 세 달</h3><div class="keymonths-grid">'+d.keyMonths.map(v=>'<article class="keymonth"><span class="km-role">'+esc(roles[v.role]||v.role)+'</span><h4>'+esc(v.label)+'</h4><span class="km-date">'+esc(naturalPeriod2027(v.from,v.to))+'</span><p>'+esc(naturalMonthWhy2027(v.why))+'</p><p class="km-action"><b>이 달에 해볼 일</b><br>'+esc(v.action)+'</p>'+detailBlock2027('자세한 날짜와 해석 근거',periodDetail2027(v.from,v.to,v.basis))+'</article>').join('')+'</div></section>';}
 
 var flowView2027={data:null,axis:'work',month:2};
 var flowAxes2027={work:{label:'일·공부',color:'#7C2D3E'},money:{label:'돈·재물',color:'#977124'},people:{label:'사람·관계',color:'#405F66'}};
@@ -622,14 +640,14 @@ function flowInner2027(){
  var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 190" role="img" aria-label="'+ax.label+'의 2027년 2월부터 2028년 1월까지 상대 흐름. 점수가 아닌 넓혀보기, 유지하기, 점검하기 세 단계로 표시해요."><title>2027년 '+ax.label+' 월별 흐름</title><rect x="65" y="26" width="27" height="134" rx="5" fill="#F0EDE6"/>';
  [[1,'넓혀보기'],[0,'유지하기'],[-1,'점검하기']].forEach(function(t){svg+='<line x1="68" y1="'+y(t[0])+'" x2="403" y2="'+y(t[0])+'" stroke="#E4DCCD" stroke-dasharray="3 5"/><text x="0" y="'+(y(t[0])+4)+'" font-size="12" fill="#756b59">'+t[1]+'</text>';});
  svg+='<text x="78" y="94" text-anchor="middle" font-size="10" fill="#938a78">입춘</text><text x="78" y="108" text-anchor="middle" font-size="10" fill="#938a78">전</text><polyline points="'+points+'" fill="none" stroke="'+color+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
- rows.forEach(function(r,i){var slot=i+1;if(!r.beforeSpring)svg+='<circle cx="'+x(slot)+'" cy="'+y(r[v.axis].level)+'" r="'+(slot===v.month?'5':'3.5')+'" fill="'+(slot===v.month?color:'#fff')+'" stroke="'+color+'" stroke-width="2"><title>'+(r.year===2028?'2028년 ':'')+r.month+'월 · '+r[v.axis].label+'</title></circle>';svg+='<text x="'+x(slot)+'" y="182" text-anchor="middle" font-size="12" fill="#756b59">'+(r.year===2028?'28.1':r.month)+'</text>';});svg+='</svg>';
- var detail=row.beforeSpring?'<h4>1월 · 입춘 전</h4><p>양력 1월부터 2월 4일 입춘 전까지는 아직 병오년이에요. 정미년 그래프에 점수를 끼워 넣지 않고 비워두었어요.</p>':'<h4>'+(row.year===2028?'2028년 ':'')+row.month+'월 · '+esc(row.pillar)+'월 · '+esc(row[v.axis].label)+'</h4><p>'+esc(row[v.axis].reason)+'</p><span class="fl-basis">'+esc(row.term)+' '+esc(row.start.replace(/-/g,'.'))+' KST부터 '+esc(row.end.replace(/-/g,'.'))+' KST 전까지<br>근거 · '+esc(row.basis)+'</span>';
+ rows.forEach(function(r,i){var slot=i+1;if(!r.beforeSpring)svg+='<circle cx="'+x(slot)+'" cy="'+y(r[v.axis].level)+'" r="'+(slot===v.month?'5':'3.5')+'" fill="'+(slot===v.month?color:'#fff')+'" stroke="'+color+'" stroke-width="2"><title>'+(r.year===2028?'2028년 ':'')+r.month+'월 · '+r[v.axis].label+'</title></circle>';svg+='<text x="'+x(slot)+'" y="182" text-anchor="middle" font-size="12" fill="#756b59">'+(r.year===2028?'1월':r.month)+'</text>';});svg+='</svg>';
+ var detail=row.beforeSpring?'<h4>1월 · 새해 흐름을 준비하며</h4><p>이 풀이는 2월 초 입춘부터 살펴봐요. 그전까지는 지난 해의 흐름이 이어지는 때로 읽어요.</p>':'<h4>'+(row.year===2028?'다음 해 ':'')+row.month+'월 · '+esc(row[v.axis].label)+'</h4><p class="human-period">'+esc(naturalPeriod2027(row.start,row.end))+'</p><p>'+esc(row[v.axis].reason)+'</p>'+detailBlock2027('자세한 날짜와 해석 근거',periodDetail2027(row.start,row.end,row.basis));
  return '<h3>2027년 월별 흐름</h3><p class="fl-intro">어느 달에 힘을 넓히고, 무엇을 점검하면 좋을지 살펴봐요. 분야와 달을 누르면 근거를 볼 수 있어요.</p>'
  +'<div class="fl-tabs" role="group" aria-label="그래프 분야">'+Object.keys(flowAxes2027).map(function(k){return '<button type="button" class="fl-tab" data-flow-axis="'+k+'" aria-pressed="'+(v.axis===k)+'">'+flowAxes2027[k].label+'</button>';}).join('')+'</div>'+svg
- +'<div class="fl-months" role="group" aria-label="자세히 볼 달">'+rows.map(function(r,i){var slot=i+1;return '<button type="button" class="fl-month'+(r.year===2028?' fl-next':'')+'" data-flow-month="'+slot+'" aria-label="'+(r.year===2028?'2028년 ':'')+r.month+'월 자세히 보기" aria-pressed="'+(v.month===slot)+'">'+(r.year===2028?'2028년 1월 · 정미년 이어보기':r.month+'월')+'</button>';}).join('')+'</div>'
+ +'<div class="fl-months" role="group" aria-label="자세히 볼 달">'+rows.map(function(r,i){var slot=i+1;return '<button type="button" class="fl-month'+(r.year===2028?' fl-next':'')+'" data-flow-month="'+slot+'" aria-label="'+(r.year===2028?'2028년 ':'')+r.month+'월 자세히 보기" aria-pressed="'+(v.month===slot)+'">'+(r.year===2028?'다음 해 1월':r.month+'월')+'</button>';}).join('')+'</div>'
  +'<div class="fl-detail" aria-live="polite">'+detail+'</div>'
- +'<p class="fl-note">2027년 1월은 회색으로 비웠고, 2월은 2월 4일 입춘부터 표시했어요. 마지막 28.1은 2028년 1월 소한부터 다음 입춘 전까지 이어지는 정미년의 마지막 달이에요.'+(f.provisional?' 출생시간 미상은 정오 기준 잠정 흐름이에요.':'')+'</p>'
- +'<details><summary>그래프 계산 기준과 한계</summary><p>운세 점수나 성공 확률이 아니에요. 기존 명식·신강/신약 분류와 월간 십신, 월지와 일지·월지의 합충 관계를 서비스의 고정 규칙으로 세 단계에 요약했어요. AI가 선의 높낮이를 정하지 않아 같은 출생 입력은 같은 그래프로 나와요.</p><p>일·공부: 신강의 식상·재성·관성 달과 신약의 비겁·인성 달은 활동·준비를 넓히는 쪽, 신약의 관성 달은 책임 점검 쪽으로 표시해요. 돈·재물: 신강의 재성·식상 달은 기회 탐색, 신강의 비겁 달과 일지에 충·형·파·해가 있는 달은 돈 약속 점검 쪽으로 표시해요. 사람·관계: 일지·월지에 충·형·파·해가 있으면 점검, 그런 신호 없이 합이 있으면 대화의 접점 확대, 나머지는 유지로 표시해요. 복합 신호는 점검을 우선해요.</p><p>신강·신약은 기존 성어 모듈의 보조 분류이며 대운·격국·용신 전체를 반영한 정밀 평가가 아니에요. 점검은 나쁜 일이 생긴다는 뜻이 아니고, 넓혀보기 역시 좋은 결과를 보장하지 않아요. 그래프는 분류 요약이고 두 해석자의 본문은 같은 달도 다른 관점으로 풀 수 있어요. 규칙 '+esc(f.rule)+'</p></details>';
+ +'<p class="fl-note">회색 구간은 새해 풀이가 시작되기 전이에요. 맨 끝의 1월은 다음 해 1월이에요.'+(f.provisional?' 태어난 시간을 몰라 일부 흐름은 달라질 수 있어요.':'')+'</p>'
+ +'<details class="reading-details"><summary>흐름을 읽는 방법</summary><p>운세 점수나 성공 확률이 아니에요. 기존 명식·신강/신약 분류와 월간 십신, 월지와 일지·월지의 합충 관계를 서비스의 고정 규칙으로 세 단계에 요약했어요. AI가 선의 높낮이를 정하지 않아 같은 출생 입력은 같은 그래프로 나와요.</p><p>일·공부: 신강의 식상·재성·관성 달과 신약의 비겁·인성 달은 활동·준비를 넓히는 쪽, 신약의 관성 달은 책임 점검 쪽으로 표시해요. 돈·재물: 신강의 재성·식상 달은 기회 탐색, 신강의 비겁 달과 일지에 충·형·파·해가 있는 달은 돈 약속 점검 쪽으로 표시해요. 사람·관계: 일지·월지에 충·형·파·해가 있으면 점검, 그런 신호 없이 합이 있으면 대화의 접점 확대, 나머지는 유지로 표시해요. 복합 신호는 점검을 우선해요.</p><p>신강·신약은 기존 성어 모듈의 보조 분류이며 대운·격국·용신 전체를 반영한 정밀 평가가 아니에요. 점검은 나쁜 일이 생긴다는 뜻이 아니고, 넓혀보기 역시 좋은 결과를 보장하지 않아요. 그래프는 분류 요약이고 두 해석자의 본문은 같은 달도 다른 관점으로 풀 수 있어요. 참고용으로 가볍게 살펴봐 주세요.</p></details>';
 }
 $('sheet').addEventListener('click',function(e){
  var target=e.target.closest('[data-flow-axis],[data-flow-month]');if(!target||!flowView2027.data)return;
@@ -646,23 +664,24 @@ function renderSheet(d){
   const span=(d.span&&typeof d.span.from==="string"&&typeof d.span.to==="string")?d.span:{from:"2027-02-04 10:46:18",to:"2028-02-04 16:31:13"};
   const boundaryInfo=c.time?null:LOLO2027.calendar(c.date,"");
   const boundaryUnknown=!!(boundaryInfo&&boundaryInfo.boundaryDay);
-  const pils=(d.ms.pils||[]).map(p=>'<div class="pil"><div class="pl">'+esc(p.l+(boundaryUnknown&&(p.l==="월주"||(p.l==="연주"&&boundaryInfo.yearBoundaryDay))?"(잠정)":""))+'</div><div class="pv">'+esc(p.v)+'</div><div class="pe">'+esc(p.e)+'</div></div>').join("");
+  const pils=(d.ms.pils||[]).map(p=>'<div class="pil"><div class="pl">'+esc(p.l+(boundaryUnknown&&(p.l==="월주"||(p.l==="연주"&&boundaryInfo.yearBoundaryDay))?"(추정)":""))+'</div><div class="pv">'+esc(p.v)+'</div><div class="pe">'+esc(p.e)+'</div></div>').join("");
   $("sheet").innerHTML=
     '<header><h2>두 명의 명리학자가 바라본 나의 2027</h2>'
-    +'<div class="who">'+esc(c.name)+' · '+esc(c.date)+(c.time?' '+esc(c.time)+'생'+(isJasiTime(c.time)?(c.jasi==='ya'?' · 야자시(당일)':' · 정자시(다음 날)'):''):' · 시간 미상')+(c.origNote?' · '+esc(c.origNote):'')+'</div></header>'
+    +'<div class="who">'+esc(c.name)+' · '+esc(naturalDate2027(c.date,true))+(c.time?' '+esc(naturalClock2027(c.time))+'생'+(isJasiTime(c.time)?(c.jasi==='ya'?' · 날짜는 당일 기준':' · 날짜는 다음 날 기준'):''):' · 태어난 시간 모름')+(c.origNote?' · '+esc(c.origNote):'')+'</div></header>'
     +'<div class="ms">'+pils+'</div>'
-    +(boundaryUnknown?'<div class="qline boundary-note">절기가 바뀌는 날이라 태어난 시간에 따라 '+(boundaryInfo.yearBoundaryDay?"연주와 월주":"월주")+'가 달라질 수 있어요. 시간 미상은 정오 기준으로 잠정 계산했어요.</div>':'')
-    +'<div class="qline boundary-note">2027 정미년은 입춘 '+esc(span.from.slice(0,10).replace(/-/g,'.'))+'(KST '+esc(span.from.slice(11))+')부터 '+esc(span.to.slice(0,10).replace(/-/g,'.'))+' 다음 입춘 전까지예요. 양력 2027년 1월 1일~2월 3일은 사주로는 아직 2026 병오년이라, 달력의 새해와 사주의 새해가 조금 달라요.</div>'
+    +(boundaryUnknown?'<div class="qline boundary-note">절기가 바뀌는 날에 태어나서, 태어난 시간에 따라 사주 구성이 달라질 수 있어요.</div>':'')
+    +'<div class="qline boundary-note">2027년 운세는 입춘 무렵인 2월 초부터 다음 해 2월 초까지 살펴봐요.</div>'
     +'<div class="qline"><b>2027 질문</b>'+esc(c.q)+'</div>'
     +idiomBlock(d,c)
     +flowBlock(d,c)
-    +'<div class="qline boundary-note">작년 비교는 해석 방향의 차이로, 실제 과거 경험을 확인한 내용은 아니에요. 시간·횟수·금액은 현실에 맞게 조정할 실행 예시예요.</div>'
+
     +'<div class="rwrap">'+expertCol("직설적인 현실파","a",d.a,secs,d.consult&&d.consult.a)+expertCol("신중한 정통파","b",d.bR,secs,d.consult&&d.consult.b)+'</div>'
     +choiceBlock(d)+keyMonthsBlock(d)
     +'<div class="syn"><h3>두 학자의 2027년 결론</h3>'
     +'<h4>공통으로 동의한 것</h4><p>'+esc(d.common)+'</p>'
     +'<h4>두 관점의 차이</h4><p>'+esc(d.diff)+'</p>'
     +'<h4>2027년에 실천할 행동 '+d.acts.length+'가지</h4><ol>'+d.acts.map(a=>'<li>'+esc(a)+'</li>').join("")+'</ol></div>'
+    +detailBlock2027('풀이 참고 안내','<p>작년과의 비교는 운의 방향을 설명한 것으로, 실제 과거 경험을 확인한 내용은 아니에요. 시간·횟수·금액은 본인 상황에 맞게 조정할 실행 예시예요.</p>'+periodDetail2027(span.from,span.to,'')+(c.time?'':'<p>태어난 시간을 몰라 낮 12시를 기준으로 살펴봤어요.</p>'))
     +'<div class="sfoot">재미로 보는 사주입니다. 전통적인 명리 해석을 참고용으로 정리한 것이라<br>전문가의 상담이나 조언을 대신하지 않고, 결과를 보장하지 않아요.</div>';
 }
 
@@ -670,7 +689,7 @@ function renderSheet(d){
 let storyBlob=null;
 async function makeStoryImage(){
   const sheet=$("sheet");
-  const cap=await html2canvas(sheet,{scale:2,backgroundColor:"#FBF6EA",logging:false});
+  const cap=await html2canvas(sheet,{scale:2,backgroundColor:"#FBF6EA",logging:false,onclone:function(doc){doc.querySelectorAll("#sheet details").forEach(function(el){el.removeAttribute("open");el.style.display="none";});}});
   const W=1080,H=Math.min(16000,Math.max(1920,Math.ceil(cap.height*960/cap.width+120))),c=document.createElement("canvas");c.width=W;c.height=H;
   const g=c.getContext("2d");
   const grad=g.createLinearGradient(0,0,0,H);
