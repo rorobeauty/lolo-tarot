@@ -591,6 +591,8 @@ async function interpret(){
     show("stepAsk");
     if(e&&e.st===429){formError("지금 2027년 흐름 보러 온 손님이 많아요! 1분만 쉬었다가 다시 눌러줘요.");return;}
     if(e&&e.st===503){formError("두 학자님이 잠깐 자리를 비우셨어요. 조금 뒤에 다시 와줘요 🌙");return;}
+    if(e&&e.why==='cost_budget'){formError('질문을 조금 더 짧게 적어주세요. 핵심 상황과 궁금한 점만 남기면 돼요. 질문 횟수는 차감되지 않았어요.');return;}
+    if(e&&e.why==='cost_check_unavailable'){formError('답변 준비를 확인하지 못해 아직 생성을 시작하지 않았어요. 질문 횟수는 차감되지 않았으니 잠시 뒤 다시 눌러주세요.');return;}
     if(e&&e.why==='quality_check'){formError('답변을 한 번 더 확인해야 해서 결과를 보여드리지 못했어요. 질문 횟수는 차감되지 않았으니 잠시 뒤 다시 눌러주세요.');return;}
     const st=(e&&e.st)?" [코드 "+e.st+(e.why?"·"+e.why:"")+"]":"";
     formError("연결이 잠깐 흔들렸어요. '두 분께 2027년을 여쭤볼게요'를 한 번 더 눌러줘요."+st);
