@@ -399,12 +399,20 @@ function consultSchema(E){
  return {type:'OBJECT',properties:{a:{type:'ARRAY',items:item,minItems:7,maxItems:7},bR:{type:'ARRAY',items:item,minItems:7,maxItems:7},consult:{type:'OBJECT',properties:{a:deep,b:deep},required:['a','b']},choice:{type:'OBJECT',properties:{title:str,options:{type:'ARRAY',items:option,minItems:2,maxItems:2},criterion:str},required:['title','options','criterion']},keyMonths:{type:'OBJECT',properties:{prepare:{type:'OBJECT',properties:{why:str,action:str},required:['why','action']},move:{type:'OBJECT',properties:{why:str,action:str},required:['why','action']},review:{type:'OBJECT',properties:{why:str,action:str},required:['why','action']}},required:['prepare','move','review']},common:str,diff:str,acts:{type:'ARRAY',items:str,minItems:4,maxItems:4}},required:['a','bR','consult','choice','keyMonths','common','diff','acts']};
 }
 function consultAllText(o){if(typeof o==='string')return o;if(Array.isArray(o))return o.map(consultAllText).join(' ');if(o&&typeof o==='object')return Object.keys(o).filter(k=>k!=='refs'&&k!=='id'&&k!=='role').map(k=>consultAllText(o[k])).join(' ');return '';}
+
 function consultUnsafe(t){
- return /절대|무조건|반드시|100\s*%/.test(t)
-  ||/(퇴사|결혼|이별|투자)(?:를|은|는|부터|만)?\s*(?:하세요|하십시오|하지\s*마세요|해야\s*(?:해요|합니다))/.test(t)
-  ||/(꼭|확실히).{0,18}(합격|승진|성공|결혼|대박|수익)/.test(t)
-  ||/(사주|명식)(?:가|에|이).{0,20}(고민|질문|속마음).{0,12}(맞혔|알아냈|보여요)/.test(t);
+ // 준비·서류 확인 같은 절차 권고와 미래 보장·큰 결정 명령을 구분합니다.
+ if(/(퇴사|이직|결혼|이별|투자)(?:를|은|는|부터|만)?\s*(?:하세요|하십시오|하지\s*마세요|해야\s*(?:해요|합니다))/.test(t)
+  ||/(퇴사|이직|결혼|이별|투자).{0,12}(절대|반드시|무조건).{0,10}(하지|하세요|해야|않|안\s*돼)/.test(t)
+  ||/(사주|명식)(?:가|에|이).{0,20}(고민|질문|속마음).{0,12}(맞혔|알아냈|보여요)/.test(t))return true;
+ const normalized=t.replace(/(절대|무조건|반드시|100\s*%)([^.!?\n]{0,32})/g,(full,marker,tail)=>{
+  if(/(보장|단정|확정|확신).{0,12}(없|않|아니|어렵|못)|(?:라는|다는)\s*뜻.{0,6}아니/.test(tail))return tail;
+  const check=tail.search(/확인|점검|검토|비교|기록|문서화|정리|준비/),outcome=tail.search(/합격|승진|성공|수익|결혼|이별|퇴사|투자|임신|건강|됩니다|될|돼|이직/);
+  return check>=0&&(outcome<0||check<outcome)?tail:full;
+ });
+ return /절대|무조건|반드시|100\s*%/.test(normalized)||/(꼭|확실히).{0,18}(합격|승진|성공|결혼|대박|수익)/.test(normalized);
 }
+
 function consultValid(data,E,c){
  const bad=code=>({ok:false,code});
  const text=(s,min,max)=>typeof s==='string'&&s.trim().length>=min&&s.trim().length<=max;
@@ -576,7 +584,7 @@ export default async function handler(req, res){
     const parsed=parseJsonLoose(text),generated=JSON.stringify(parsed);
     const data = finalizeOut(parsed, P, c, Y, F);
     if (!data) {
-      console.error("gemini_bad_json", m, cand.finishReason || "-", "len=" + text.length, "validation="+(finalizeOut.lastError||"parse"));
+      console.error("gemini_bad_json", m, cand.finishReason || "-", "len=" + text.length, "validation="+(finalizeOut.lastError||"parse"),"terms="+JSON.stringify(consultDiagnostics(parsed,consultEvidence(Y,F,c),c).forbiddenTerms));
       repairNote="\n앞선 응답의 검증 실패: "+(finalizeOut.lastError||"parse")+". 이미 충분히 쓴 문장은 줄이지 말고 오류가 있는 부분만 수정해 전체 JSON을 다시 작성하세요. 금지 전문용어는 일상말로 바꾸고 모든 항목의 최소 분량을 유지하세요. 검사 요약: "+JSON.stringify(consultDiagnostics(parsed,consultEvidence(Y,F,c),c))+"\n이전 작성 JSON: "+generated;
       lastErr = "quality_check"; continue;
     }
