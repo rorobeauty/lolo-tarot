@@ -561,6 +561,7 @@ function finalizeOut(data,P,c,Y,F){
 }
 
 export default async function handler(req, res){
+  return res.status(503).json({error:"paused"}); // 비용 상한 검증까지 유료 생성 중지
   if (!guard(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({error:"method"});
   const key = process.env.GEMINI_API_KEY;
