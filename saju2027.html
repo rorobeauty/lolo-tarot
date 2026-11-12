@@ -169,6 +169,29 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 .reading-details summary:focus-visible{outline:2px solid var(--burg);outline-offset:3px}
 .reading-detail-body{padding:3px 0 6px}.reading-detail-body p{margin:6px 0}.reading-detail-body h5{margin:9px 0 3px;font-size:.72rem}
 .rd .reading-details{margin-top:16px}.rd .reading-details p{font-size:.7rem}.idiom27 .reading-details{font-size:.7rem}.human-period{color:#867a65;font-size:.72rem;margin-bottom:5px}
+
+/* 정사각형 공유 결과지: 원문 유지, 출생 정보 제외 */
+.square-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:min(92vw,900px);max-height:69vh;overflow:auto;padding:4px 4px 10px;align-items:start}
+.square-tile{margin:0;min-width:0;background:#1A2140;border:1px solid #39456E;border-radius:12px;padding:8px}
+.modal .square-tile img{width:100%;max-width:none;max-height:none;height:auto;display:block;border-radius:7px;box-shadow:none}
+.square-tile figcaption{color:#EAD9A6;font-size:.8rem;margin:8px 0;line-height:1.4}
+.square-tile button{width:100%;border:1px solid #A8853C;background:#141B33;color:#EAE4D6;border-radius:8px;padding:9px;font:inherit;font-size:.82rem;cursor:pointer}
+.modal.square-modal{overflow:auto;gap:10px}.square-modal h3{color:#EAD9A6;font-size:1.06rem;margin:0}.square-modal .mrow{width:min(92vw,900px)}
+.square-modal .mhint{max-width:900px;font-size:.78rem}.square-modal .mrow .btn{padding:12px 9px;font-size:.85rem;min-width:90px}
+#squareRenderHost{position:absolute;left:-12000px;top:0;width:1080px;pointer-events:none;z-index:-10}
+.sq-card{--sq-accent:#7C2D3E;box-sizing:border-box;width:1080px;height:1080px;min-height:1080px;max-height:1080px;padding:38px 46px 28px;border:8px solid #17213C;background:#FBF6EA;color:#2B2A26;display:flex;flex-direction:column;overflow:hidden;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;text-size-adjust:none;-webkit-text-size-adjust:none}
+.sq-card.sq-b{--sq-accent:#75551D;border-color:#A8853C}.sq-card.sq-plan{--sq-accent:#354F4A}.sq-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:16px;border-bottom:2px solid #D8CDB4}
+.sq-brand{font-size:18px;line-height:1.2;color:#806E4A;letter-spacing:1px;margin-bottom:7px}.sq-title{font-size:35px;font-weight:800;line-height:1.22;letter-spacing:-1px;color:#28314A;margin:0}.sq-page{font-size:25px;line-height:1;color:var(--sq-accent);font-weight:800;white-space:nowrap}
+.sq-body{flex:1;min-height:0;padding-top:16px;overflow:hidden;font-size:var(--sq-font,26px);line-height:1.38;letter-spacing:-.025em;word-break:keep-all;overflow-wrap:anywhere}
+.sq-body h4{font-size:1.03em;line-height:1.25;font-weight:800;margin:0 0 .28em;color:var(--sq-accent);letter-spacing:-.025em}.sq-body p{font-size:1em;line-height:1.38;margin:0;white-space:pre-line}.sq-sec{margin-bottom:.6em;min-width:0}.sq-body ol{margin:.15em 0 0;padding-left:1.25em}.sq-body li{line-height:1.35;margin:0 0 .22em;padding-left:.06em}
+.sq-hero{display:flex;align-items:center;gap:22px;padding:15px 20px;margin-bottom:15px;border-radius:10px;background:#EEE5D1;border-left:5px solid #A8853C}.sq-idiom{font-size:46px;line-height:1.1;font-weight:800;color:#7C2D3E;white-space:nowrap;letter-spacing:1px}.sq-hanja{font-size:24px;letter-spacing:4px;color:#806E4A;margin-top:6px}.sq-meaning{font-size:1.06em;line-height:1.4;font-weight:700}.sq-small-label{font-size:17px;line-height:1.25;color:#806E4A;margin-bottom:5px;letter-spacing:1px}
+.sq-question{border-bottom:1px solid #D8CDB4;padding-bottom:.65em;margin-bottom:.65em}.sq-topics{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:0 22px}.sq-topic{width:calc((100% - 22px)/2);min-width:0}.sq-topic.sq-wide{width:100%}
+.sq-why{background:#F0EADD;padding:.45em .6em;border-radius:6px;margin:.5em 0 .1em}.sq-why h4{font-size:.95em}.sq-plan-cols{display:flex;gap:24px;align-items:flex-start;margin-bottom:.55em}.sq-plan-col{width:calc((100% - 24px)/2);min-width:0}.sq-col-title{font-size:1.08em;font-weight:800;color:#28314A;line-height:1.2;margin-bottom:.45em}.sq-sub{font-size:.87em;color:#776B58;line-height:1.35;margin-top:.2em}.sq-months{display:flex;gap:18px;align-items:flex-start}.sq-month{width:calc((100% - 36px)/3);min-width:0;border-top:2px solid #C9B88F;padding-top:.4em}.sq-month p+p{margin-top:.35em}.sq-month-role{font-size:.9em;font-weight:700;color:#7C2D3E;margin-bottom:.18em}
+.sq-foot{flex:none;border-top:1px solid #D8CDB4;padding-top:10px;margin-top:10px;display:flex;justify-content:space-between;gap:12px;font-size:16px;line-height:1.25;color:#7A6B54;letter-spacing:-.2px}.sq-foot span:last-child{white-space:nowrap}
+@media(max-width:520px){.square-gallery{gap:8px}.square-tile{padding:5px}.square-modal .mrow{gap:7px}.square-modal .mrow .btn{min-width:75px;font-size:.76rem}.square-tile figcaption{font-size:.72rem}}
+
+.sq-body .sq-list{list-style:none;padding-left:0}.sq-list li{display:flex;align-items:flex-start;gap:.35em}.sq-num{flex:none;width:1.05em;font-variant-numeric:tabular-nums}.sq-list-text{flex:1;min-width:0}
+.square-tile button{min-height:44px}
 </style>
 </head>
 <body>
@@ -244,13 +267,14 @@ body{word-break:keep-all;overflow-wrap:break-word}/* ── 휴업 안내 ──
 <section id="stepResult" class="hide">
 <div class="sheet" id="sheet"></div>
 <div class="actions">
-<button class="btn ghost" id="btnSaveImg">결과지 이미지로 저장</button>
+<button class="btn ghost" id="btnSaveImg">트위터용 정사각형 4장 저장</button>
 <button class="btn full" id="btnAgain">다시 여쭤볼래요</button>
 </div>
-<div class="modal hide" id="imgModal">
-<img id="storyImg" alt="2027 사주 결과지">
+<div class="modal square-modal hide" id="imgModal" role="dialog" aria-modal="true" aria-labelledby="squareModalTitle">
+<h3 id="squareModalTitle" tabindex="-1">트위터용 정사각형 결과지 4장</h3>
+<div class="square-gallery" id="squareGallery"></div>
 <div class="mhint" id="mhint"></div>
-<div class="mrow"><button class="btn" id="btnDl" data-fn="lolo-saju-2027.png">저장 / 공유하기</button><button class="btn ghost" id="btnCloseM">닫기</button></div>
+<div class="mrow"><button class="btn" id="btnDl" disabled>4장 한 번에 저장 (.zip)</button><button class="btn ghost hide" id="btnShareSquares">4장 공유하기</button><button class="btn ghost" id="btnCloseM">닫기</button></div>
 </div>
 </section>
 
@@ -496,7 +520,7 @@ function idiomBlock(d,c){
   return '<div class="idiom27"><div class="il">2027년 나의 사자성어</div><div class="iw"><b>'+esc(r.idiom)+'</b><span>'+esc(r.hanja)+'</span></div><div class="im">'+esc(r.meaning)+'</div>'+detailBlock2027('이 사자성어가 나온 이유','<p>'+esc(r.why.join(" "))+'</p>')+'</div>';
 }
 
-let cal="solar", sex="f", lastCtx=null;
+let cal="solar", sex="f", lastCtx=null, lastResult2027=null, squareShareState=null;
 
 function syncBirthDateValue(){
   const y=$("birthYear").value,m=$("birthMonth").value,d=$("birthDay").value;
@@ -659,6 +683,7 @@ $('sheet').addEventListener('click',function(e){
 });
 
 function renderSheet(d){
+  lastResult2027=d;clearSquareShare();
   const c=lastCtx;
   const secs=(Array.isArray(d.secs)&&d.secs.length===7&&d.secs.every(x=>typeof x==="string"))?d.secs:SECS;
   const span=(d.span&&typeof d.span.from==="string"&&typeof d.span.to==="string")?d.span:{from:"2027-02-04 10:46:18",to:"2028-02-04 16:31:13"};
@@ -684,55 +709,98 @@ function renderSheet(d){
     +'<div class="sfoot">'+(c.time?'':'태어난 시간을 몰라 낮 12시 기준으로 살펴봤어요.<br>')+'재미로 보는 사주입니다. 전통적인 명리 해석을 참고용으로 정리한 것이라<br>전문가의 상담이나 조언을 대신하지 않고, 결과를 보장하지 않아요.</div>';
 }
 
-/* 결과지 이미지 저장 (정직 안내·인앱 감지) */
-let storyBlob=null;
-async function makeStoryImage(){
-  const sheet=$("sheet");
-  const cap=await html2canvas(sheet,{scale:2,backgroundColor:"#FBF6EA",logging:false,onclone:function(doc){doc.querySelectorAll("#sheet details").forEach(function(el){el.removeAttribute("open");el.style.display="none";});}});
-  const W=1080,H=Math.min(16000,Math.max(1920,Math.ceil(cap.height*960/cap.width+120))),c=document.createElement("canvas");c.width=W;c.height=H;
-  const g=c.getContext("2d");
-  const grad=g.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,"#1A2348");grad.addColorStop(.6,"#0F152A");grad.addColorStop(1,"#0B1020");
-  g.fillStyle=grad;g.fillRect(0,0,W,H);
-  g.fillStyle="#EAD9A6";
-  for(const [x,y,r] of [[90,140,3],[980,120,2.5],[160,1760,2.5],[930,1800,3],[540,70,2],[70,960,2],[1010,1000,2.2]]){g.beginPath();g.arc(x,y,r,0,7);g.fill();}
-  const pad=60,sc=Math.min((W-pad*2)/cap.width,(H-pad*2)/cap.height);
-  g.save();g.shadowColor="rgba(0,0,0,.55)";g.shadowBlur=48;g.shadowOffsetY=16;
-  g.drawImage(cap,(W-cap.width*sc)/2,(H-cap.height*sc)/2,cap.width*sc,cap.height*sc);g.restore();
-  return new Promise(res=>c.toBlob(res,"image/png"));
-}
-$("btnSaveImg").onclick=async()=>{
-  const b=$("btnSaveImg");b.disabled=true;const t=b.textContent;b.textContent="결과지 만드는 중…";
-  try{
-    storyBlob=await makeStoryImage();
-    $("storyImg").src=await blobToDataURL(storyBlob);
-    $("mhint").textContent=inApp()
-      ?"카톡·인스타 안에서는 저장이 막힐 수 있어요. 이미지를 꾹 눌러 저장하거나, 안 되면 화면을 캡처해줘요."
-      :"아래 버튼으로 저장하거나, 이미지를 꾹 눌러 저장해줘요.";
-    $("imgModal").classList.remove("hide");
-  }catch(e){alert("결과지를 만들다 살짝 넘어졌어요. 한 번만 다시 눌러줘요.");}
-  b.disabled=false;b.textContent=t;
-};
-$("btnDl").onclick=async()=>{
-  if(!storyBlob)return;
-  const fname=$("btnDl").dataset.fn||"lolo-saju-2027.png";
-  const file=new File([storyBlob],fname,{type:"image/png"});
-  if(navigator.canShare&&navigator.canShare({files:[file]})){
-    try{await navigator.share({files:[file]});
-      $("mhint").textContent="공유 창에서 '이미지 저장'을 누르면 갤러리에 담겨요 ✨";return;
-    }catch(e){if(e&&e.name==="AbortError")return;}
+async function makeSquareZip(entries) {
+  if (!Array.isArray(entries)) throw new TypeError("entries must be an array");
+  const encoder = new TextEncoder();
+  const crcTable = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    crcTable[n] = c >>> 0;
   }
-  if(inApp()){$("mhint").textContent="이 브라우저에선 자동 저장이 막혀 있어요. 위 이미지를 꾹 눌러 저장하거나, 화면을 캡처해줘요.";return;}
-  try{
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(storyBlob);a.download=fname;
-    document.body.appendChild(a);a.click();a.remove();
-    $("mhint").textContent="다운로드를 시작했어요. 갤러리나 파일함을 확인해줘요. 안 보이면 이미지를 꾹 눌러 저장!";
-  }catch(e){$("mhint").textContent="이미지를 꾹 눌러 저장하거나, 화면을 캡처해줘요.";}
-};
-$("btnCloseM").onclick=()=>{$("imgModal").classList.add("hide");};
+  const crc32 = (bytes) => {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  };
+  const u16 = (view, offset, value) => view.setUint16(offset, value, true);
+  const u32 = (view, offset, value) => view.setUint32(offset, value >>> 0, true);
+  const now = new Date();
+  const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | Math.floor(now.getSeconds() / 2);
+  const year = Math.min(2107, Math.max(1980, now.getFullYear()));
+  const dosDate = ((year - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  if (entries.length > 0xFFFF) throw new RangeError("ZIP32 supports at most 65535 entries");
+  for (const entry of entries) {
+    if (!entry || typeof entry.name !== "string" || !(entry.blob instanceof Blob)) {
+      throw new TypeError("each entry must have a string name and a Blob");
+    }
+    const nameBytes = encoder.encode(entry.name);
+    if (!nameBytes.length) throw new TypeError("ZIP entry names cannot be empty");
+    if (nameBytes.length > 0xFFFF) throw new RangeError("ZIP entry filename is too long");
+    const data = new Uint8Array(await entry.blob.arrayBuffer());
+    if (data.length > 0xFFFFFFFF || offset > 0xFFFFFFFF) throw new RangeError("ZIP32 size/offset limit exceeded");
+    const crc = crc32(data);
+    const local = new Uint8Array(30 + nameBytes.length);
+    const lv = new DataView(local.buffer);
+    u32(lv, 0, 0x04034B50); u16(lv, 4, 20); u16(lv, 6, 0x0800);
+    u16(lv, 8, 0); u16(lv, 10, dosTime); u16(lv, 12, dosDate);
+    u32(lv, 14, crc); u32(lv, 18, data.length); u32(lv, 22, data.length);
+    u16(lv, 26, nameBytes.length); u16(lv, 28, 0); local.set(nameBytes, 30);
+    localParts.push(local, data);
+
+    const central = new Uint8Array(46 + nameBytes.length);
+    const cv = new DataView(central.buffer);
+    u32(cv, 0, 0x02014B50); u16(cv, 4, 20); u16(cv, 6, 20);
+    u16(cv, 8, 0x0800); u16(cv, 10, 0); u16(cv, 12, dosTime); u16(cv, 14, dosDate);
+    u32(cv, 16, crc); u32(cv, 20, data.length); u32(cv, 24, data.length);
+    u16(cv, 28, nameBytes.length); u16(cv, 30, 0); u16(cv, 32, 0);
+    u16(cv, 34, 0); u16(cv, 36, 0); u32(cv, 38, 0); u32(cv, 42, offset);
+    central.set(nameBytes, 46);
+    centralParts.push(central);
+    offset += local.length + data.length;
+  }
+  const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+  if (offset + centralSize > 0xFFFFFFFF) throw new RangeError("ZIP32 archive size limit exceeded");
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  u32(ev, 0, 0x06054B50); u16(ev, 4, 0); u16(ev, 6, 0);
+  u16(ev, 8, entries.length); u16(ev, 10, entries.length);
+  u32(ev, 12, centralSize); u32(ev, 16, offset); u16(ev, 20, 0);
+  return new Blob([...localParts, ...centralParts, eocd], { type: "application/zip" });
+}
+
+
+/* 1:1 공유 이미지 4장: 텍스트 재생성이나 추가 API 호출 없음 */
+var squareShareVersion=0,squareBodyOverflow='',squareModalOwnsOverflow=false,squareBusy=false;
+function squareSignature(d,c){return JSON.stringify({report:d,q:c&&c.q,date:c&&c.date,time:c&&c.time,jasi:c&&c.jasi,sample:!!(c&&c.shareSample)});}
+function assertSquareSource(version,signature){if(version!==squareShareVersion||signature!==squareSignature(lastResult2027,lastCtx)){var e=Error('결과가 바뀌었어요. 다시 저장해 주세요.');e.name='AbortError';throw e;}}
+
+function clearSquareShare(){squareShareVersion++;if(squareShareState&&squareShareState.entries)squareShareState.entries.forEach(function(v){if(v.url)URL.revokeObjectURL(v.url);});squareShareState=null;var gallery=$('squareGallery');if(gallery)gallery.innerHTML='';var modal=$('imgModal');if(modal)modal.classList.add('hide');if(squareModalOwnsOverflow){document.body.style.overflow=squareBodyOverflow;squareModalOwnsOverflow=false;}}
+function squareSection(title,text,extra){return '<section class="sq-sec '+(extra||'')+'"><h4>'+esc(title)+'</h4><p>'+esc(text||'')+'</p></section>';}
+function squareList(title,items){return '<section class="sq-sec"><h4>'+esc(title)+'</h4><ol class="sq-list">'+(items||[]).map(function(t,i){return '<li><span class="sq-num">'+(i+1)+'.</span><span class="sq-list-text">'+esc(t)+'</span></li>';}).join('')+'</ol></section>';}
+function squareFrame(title,body,page,variant,sample){return '<article class="sq-card '+(variant||'')+'" id="squareCard'+page+'"><header class="sq-top"><div><div class="sq-brand">로로사주 · 두 명의 명리학자</div><h3 class="sq-title">'+esc(title)+'</h3></div><div class="sq-page">0'+page+' / 04</div></header><div class="sq-body">'+body+'</div><footer class="sq-foot"><span>'+(sample?'가상 입력 예시 · ':'')+'참고용 전통 풀이 · 결과를 보장하지 않아요.</span><span>lolo-tarot.vercel.app</span></footer></article>';}
+function squareReaderBody(rows,sections,deep){return '<div class="sq-topics">'+rows.map(function(row,i){var text=typeof row==='string'?row:row.t;return '<div class="sq-topic '+(i<2||i===6?'sq-wide':'')+'">'+squareSection(sections[i],text)+(i===0&&deep&&deep.why?'<div class="sq-why">'+squareSection('왜 이런 답인가요?',deep.why)+'</div>':'')+'</div>';}).join('')+'</div>';}
+function squarePlanColumn(title,deep){if(!deep)return '';return '<div class="sq-plan-col"><div class="sq-col-title">'+esc(title)+'</div>'+squareSection('이런 조건이면 검토해봐요',deep.favorable)+squareSection('이 조건은 먼저 확인해요',deep.caution)+squareList('준비·시도·점검 순서',deep.steps||[])+'</div>';}
+function squareCardMarkup(d,c){if(!d||!Array.isArray(d.a)||!Array.isArray(d.bR))throw Error('결과를 먼저 확인해 주세요.');var s=Array.isArray(d.secs)&&d.secs.length===7?d.secs:SECS,v=d.y2027||LOLO2027.compute(c.date,c.time||'',{jasi:c.jasi||'jeong'}),sample=c.shareSample===true;var cover='<div class="sq-hero"><div><div class="sq-small-label">2027년 나의 사자성어</div><div class="sq-idiom">'+esc(v.idiom)+'</div><div class="sq-hanja">'+esc(v.hanja||'')+'</div></div><div class="sq-meaning">'+esc(v.meaning||'')+'</div></div><div class="sq-question"><div class="sq-small-label">내가 궁금한 것</div><p>'+esc(c.q||'')+'</p></div>'+squareSection('두 학자가 공통으로 동의한 것',d.common)+squareSection('두 관점의 차이',d.diff);var plan='<div class="sq-plan-cols">'+squarePlanColumn('직설파의 판단 기준',d.consult&&d.consult.a)+squarePlanColumn('정통파의 판단 기준',d.consult&&d.consult.b)+'</div>'+squareList('2027년에 실천할 행동 '+(d.acts||[]).length+'가지',d.acts||[]);if(Array.isArray(d.keyMonths)&&d.keyMonths.length){plan+='<section class="sq-sec"><h4>기억해둘 세 달</h4><div class="sq-months">'+d.keyMonths.map(function(m){return '<article class="sq-month"><div class="sq-month-role">'+esc(m.role||'')+' · '+esc(m.label||'')+'</div><div class="sq-sub">'+esc(naturalPeriod2027(m.from,m.to))+'</div><p>'+esc(naturalMonthWhy2027(m.why))+'</p><p>'+esc(m.action||'')+'</p></article>';}).join('')+'</div></section>';}return [squareFrame('한눈에 보는 나의 2027',cover,1,'',sample),squareFrame('직설적인 현실파',squareReaderBody(d.a,s,d.consult&&d.consult.a),2,'sq-a',sample),squareFrame('신중한 정통파',squareReaderBody(d.bR,s,d.consult&&d.consult.b),3,'sq-b',sample),squareFrame('선택 조건과 실천 계획',plan,4,'sq-plan',sample)];}
+function fitSquareCard(card){var body=card.querySelector('.sq-body');for(var size=26;size>=16;size-=.5){card.style.setProperty('--sq-font',size+'px');var fit=body.scrollHeight<=body.clientHeight+1&&body.scrollWidth<=body.clientWidth+1;if(fit)return size;}throw Error('내용이 길어 정사각형 4장에 전부 담지 못했어요.');}
+async function makeSquareImages(d,c,version,signature){if(document.fonts&&document.fonts.ready)await document.fonts.ready;assertSquareSource(version,signature);var old=$('squareRenderHost');if(old)old.remove();var host=document.createElement('div');host.id='squareRenderHost';host.setAttribute('aria-hidden','true');host.innerHTML=squareCardMarkup(d,c).join('');document.body.appendChild(host);var entries=[],titles=['핵심 결론','직설적인 현실파','신중한 정통파','선택 조건과 실천 계획'];try{for(let i=0;i<4;i++){assertSquareSource(version,signature);var card=host.children[i],fontSize=fitSquareCard(card);const cardId=card.id;var canvas=document.createElement('canvas');canvas.width=1600;canvas.height=1600;await html2canvas(card,{canvas:canvas,scale:1600/1080,width:1080,height:1080,windowWidth:1280,windowHeight:1280,scrollX:0,scrollY:0,backgroundColor:'#FBF6EA',logging:false,onclone:function(doc){var h=doc.getElementById('squareRenderHost');h.style.cssText='position:absolute;left:0;top:0;width:1080px;pointer-events:none;z-index:0';Array.from(h.children).forEach(function(n){if(n.id!==cardId)n.style.display='none';});doc.documentElement.scrollTop=0;doc.body.scrollTop=0;}});assertSquareSource(version,signature);var blob=await new Promise(function(resolve,reject){canvas.toBlob(function(b){if(b)resolve(b);else reject(Error('이미지를 만들지 못했어요.'));},'image/png');});assertSquareSource(version,signature);canvas.width=0;canvas.height=0;entries.push({name:'lolo-saju-2027-0'+(i+1)+'.png',title:titles[i],blob:blob,url:URL.createObjectURL(blob),fontSize:fontSize,width:1600,height:1600});$('btnSaveImg').textContent='이미지 '+(i+1)+'/4 만드는 중';}if(version!==squareShareVersion)throw Error('결과가 바뀌었어요. 다시 저장해 주세요.');return {entries:entries,signature:signature,zip:null,version:version};}catch(e){if(canvas){canvas.width=0;canvas.height=0;}entries.forEach(function(v){URL.revokeObjectURL(v.url);});throw e;}finally{host.remove();}}
+function showSquareGallery(state){$('squareGallery').innerHTML=state.entries.map(function(v,i){return '<figure class="square-tile"><img src="'+esc(v.url)+'" alt="2027 사주 정사각형 '+(i+1)+'장 '+esc(v.title)+'"><figcaption>0'+(i+1)+' / 04 · '+esc(v.title)+'</figcaption><button type="button" data-square-download="'+i+'">이 이미지 저장</button></figure>';}).join('');var files=state.entries.map(function(v){return new File([v.blob],v.name,{type:'image/png'});}),canShare=false;try{canShare=!!(navigator.canShare&&navigator.canShare({files:files}));}catch(e){}$('btnShareSquares').classList.toggle('hide',!canShare);$('btnDl').disabled=false;$('mhint').textContent='이름·생년월일·출생 시간은 넣지 않았어요. 질문에 개인정보가 있다면 게시 전에 확인해 주세요. '+(inApp()?'저장이 막히면 이미지를 길게 눌러 저장해 주세요.':'4장을 ZIP으로 받거나 각 이미지를 따로 저장할 수 있어요.');if(!squareModalOwnsOverflow){squareBodyOverflow=document.body.style.overflow;squareModalOwnsOverflow=true;}document.body.style.overflow='hidden';$('imgModal').classList.remove('hide');$('squareModalTitle').focus({preventScroll:true});}
+function saveSquareBlob(blob,name){var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},60000);}
+$('btnSaveImg').onclick=async function(){if(squareBusy)return;squareBusy=true;var button=$('btnSaveImg'),built=null;button.disabled=true;button.textContent='정사각형 4장 만드는 중';try{if(!lastResult2027||!lastCtx)throw Error('결과를 먼저 확인해 주세요.');var signature=squareSignature(lastResult2027,lastCtx);if(squareShareState&&squareShareState.signature!==signature)clearSquareShare();if(!squareShareState){var version=squareShareVersion,report=JSON.parse(JSON.stringify(lastResult2027)),context=JSON.parse(JSON.stringify(lastCtx));built=await makeSquareImages(report,context,version,signature);assertSquareSource(version,signature);squareShareState=built;}showSquareGallery(squareShareState);}catch(e){if(built&&built!==squareShareState)built.entries.forEach(function(v){URL.revokeObjectURL(v.url);});if(e&&e.name==='AbortError')return;$('squareGallery').innerHTML='';$('btnDl').disabled=true;$('btnShareSquares').classList.add('hide');$('mhint').textContent=e&&e.message?e.message:'이미지를 만들지 못했어요. 다시 눌러 주세요.';if(!squareModalOwnsOverflow){squareBodyOverflow=document.body.style.overflow;squareModalOwnsOverflow=true;}document.body.style.overflow='hidden';$('imgModal').classList.remove('hide');$('squareModalTitle').focus({preventScroll:true});}finally{squareBusy=false;button.disabled=false;button.textContent='트위터용 정사각형 4장 저장';}};
+$('squareGallery').addEventListener('click',function(e){var b=e.target.closest('[data-square-download]');if(!b||!squareShareState)return;var index=Number(b.dataset.squareDownload),entry=squareShareState.entries[index];if(!entry)return;if(inApp()){$('mhint').textContent='이 브라우저에서 저장이 막히면 이미지를 길게 눌러 저장해 주세요.';return;}saveSquareBlob(entry.blob,entry.name);$('mhint').textContent='이미지 '+(index+1)+'장의 다운로드를 시작했어요. 파일함을 확인해 주세요.';});
+$('btnDl').onclick=async function(){if(!squareShareState)return;var button=$('btnDl'),text=button.textContent;button.disabled=true;button.textContent='4장 묶는 중';try{if(!squareShareState.zip)squareShareState.zip=await makeSquareZip(squareShareState.entries);saveSquareBlob(squareShareState.zip,'lolo-saju-2027-square-4.zip');$('mhint').textContent='ZIP 다운로드를 시작했어요. 압축을 풀면 정사각형 PNG 4장이 들어 있어요.';}catch(e){$('mhint').textContent='묶음 저장이 막혔어요. 각 이미지의 저장 버튼이나 길게 누르기를 이용해 주세요.';}finally{button.disabled=false;button.textContent=text;}};
+$('btnShareSquares').onclick=async function(){if(!squareShareState)return;var files=squareShareState.entries.map(function(v){return new File([v.blob],v.name,{type:'image/png'});});try{await navigator.share({files:files});}catch(e){if(!e||e.name!=='AbortError')$('mhint').textContent='공유 창을 열지 못했어요. 이미지 저장이나 ZIP 저장을 이용해 주세요.';}};
+$('btnCloseM').onclick=function(){$('imgModal').classList.add('hide');if(squareModalOwnsOverflow){document.body.style.overflow=squareBodyOverflow;squareModalOwnsOverflow=false;}$('btnSaveImg').focus({preventScroll:true});};
+
+$('imgModal').addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();$('btnCloseM').click();}});
+
 $("btnAgain").onclick=()=>{show("stepAsk");window.scrollTo({top:0});};
 if(isClosed())closedView();
 </script>
 </body>
 </html>
+
